@@ -1257,52 +1257,53 @@ function openModal(id) { $(id).classList.add('on'); }
 function closeModal(id) { $(id).classList.remove('on'); }
 $('logoutOv').addEventListener('click', e=>{ if(e.target===e.currentTarget) closeModal('logoutOv'); });
 
+/* ── BOOTSTRAP APP ───────────────────────────────────── */
+async function bootstrapApp() {
+  const rv = $('rv');
+  if (rv) rv.innerHTML = '<div class="loader-wrap"><div class="loader"></div></div>';
+  showScreen('sApp');
+
+  try {
+    await loadData();
+  } catch(err) {
+    console.error('[loadData]', err);
+    if (rv) rv.innerHTML = `<div class="empty" style="padding:40px 20px;text-align:center">
+      <i class="ti ti-wifi-off" style="font-size:48px;color:var(--text3);display:block;margin-bottom:16px"></i>
+      <div style="font-size:15px;font-weight:700;color:var(--text);margin-bottom:8px">Błąd ładowania danych</div>
+      <div style="font-size:13px;color:var(--text2);margin-bottom:20px">Sprawdź połączenie z internetem i spróbuj ponownie.</div>
+      <button class="btn btn-primary" onclick="location.reload()"><i class="ti ti-refresh"></i> Odśwież</button>
+    </div>`;
+    return;
+  }
+
+  const name = curClients[0]?.imie_nazwisko || curUser.email || '?';
+  const initials = name.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
+  $('userAv').textContent = initials;
+  $('userName').textContent = name.split(' ')[0];
+
+  if (!curClients.length) {
+    showScreen('sPending');
+    $('pendingEmail').textContent = curUser.email;
+    return;
+  }
+
+  setupRealtime();
+  render();
+  checkIosBanner();
+}
+
 /* ── AUTH STATE ──────────────────────────────────────── */
+// Obsługuje tylko zdarzenia zmiany stanu (SIGNED_IN, SIGNED_OUT).
+// Ładowanie przy starcie (page refresh) obsługuje getSession() w init().
 sb.auth.onAuthStateChange(async (event, session) => {
-  console.log('[auth]', event, session?.user?.email || 'no user', 'clients:', curClients.length);
+  console.log('[auth]', event, session?.user?.email || 'no user');
   if (session?.user) {
     curUser = session.user;
-
-    // Inicjalizuj przy logowaniu i starcie aplikacji.
-    // TOKEN_REFRESHED: odśwież tylko gdy dane nie są jeszcze załadowane
-    // (scenariusz: token wygasł, INITIAL_SESSION odpalił z wygasłym tokenem,
-    //  a TOKEN_REFRESHED przynosi świeży token — bez tego dane nigdy nie załadują się).
-    const isInitialLoad = event === 'SIGNED_IN' || event === 'INITIAL_SESSION';
-    const needsRetry    = event === 'TOKEN_REFRESHED' && curClients.length === 0;
-    if (!isInitialLoad && !needsRetry) return;
-
-    // --- Pełna inicjalizacja tylko przy logowaniu/starcie ---
-    const rv = $('rv');
-    if (rv) rv.innerHTML = '<div class="loader-wrap"><div class="loader"></div></div>';
-    showScreen('sApp');
-
-    try {
-      await loadData();
-    } catch(err) {
-      console.error('[loadData]', err);
-      if (rv) rv.innerHTML = `<div class="empty" style="padding:40px 20px;text-align:center">
-        <i class="ti ti-wifi-off" style="font-size:48px;color:var(--text3);display:block;margin-bottom:16px"></i>
-        <div style="font-size:15px;font-weight:700;color:var(--text);margin-bottom:8px">Błąd ładowania danych</div>
-        <div style="font-size:13px;color:var(--text2);margin-bottom:20px">Sprawdź połączenie z internetem i spróbuj ponownie.</div>
-        <button class="btn btn-primary" onclick="location.reload()"><i class="ti ti-refresh"></i> Odśwież</button>
-      </div>`;
-      return;
+    if (event === 'SIGNED_IN') {
+      // Świeże logowanie — załaduj dane
+      await bootstrapApp();
     }
-
-    const name = curClients[0]?.imie_nazwisko || curUser.email || '?';
-    const initials = name.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
-    $('userAv').textContent = initials;
-    $('userName').textContent = name.split(' ')[0];
-
-    if (!curClients.length) {
-      showScreen('sPending');
-      $('pendingEmail').textContent = curUser.email;
-      return;
-    }
-
-    setupRealtime();
-    render();
-    checkIosBanner();
+    // TOKEN_REFRESHED, USER_UPDATED itp.: zaktualizuj curUser, dane zostają w pamięci
   } else {
     curUser=null; curClients=[]; allRequests=[]; teardownRealtime();
     if (!activationToken) showScreen('sLogin');
@@ -1310,14 +1311,15 @@ sb.auth.onAuthStateChange(async (event, session) => {
 });
 
 /* ── INIT ────────────────────────────────────────────── */
-(function init() {
+(async function init() {
   initTheme();
 
   // Force logout via URL: portal.serwiscieplo.pl?logout=1
   const urlParams = new URLSearchParams(location.search);
   if (urlParams.get('logout')) {
     Object.keys(localStorage).filter(k => k.startsWith('sb-')).forEach(k => localStorage.removeItem(k));
-    sb.auth.signOut().finally(() => { location.href = location.pathname; });
+    await sb.auth.signOut();
+    location.href = location.pathname;
     return;
   }
 
@@ -1328,15 +1330,24 @@ sb.auth.onAuthStateChange(async (event, session) => {
     return;
   }
 
-  // Default: show login (auth state change will override)
-  showScreen('sLogin');
-
   // Wyrejestruj wszystkie Service Workery — portal wymaga połączenia z Supabase,
   // SW nie jest potrzebny i powodował problemy z cacheowaniem.
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.getRegistrations().then(regs => {
       regs.forEach(r => r.unregister());
     });
+  }
+
+  // Sprawdź sesję bezpośrednio — niezawodne na wszystkich platformach i przy każdym odświeżeniu.
+  // getSession() poczeka na odświeżenie tokenu jeśli jest wygasły, i zwróci aktualną sesję.
+  // Nie polegamy na INITIAL_SESSION z onAuthStateChange (ma problemy z timingiem w supabase-js v2).
+  const { data: { session } } = await sb.auth.getSession();
+  console.log('[init] getSession:', session?.user?.email || 'no session');
+  if (session?.user) {
+    curUser = session.user;
+    await bootstrapApp();
+  } else {
+    showScreen('sLogin');
   }
 })();
 
