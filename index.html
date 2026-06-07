@@ -1331,9 +1331,12 @@ sb.auth.onAuthStateChange(async (event, session) => {
   // Default: show login (auth state change will override)
   showScreen('sLogin');
 
-  // PWA Service Worker
+  // Wyrejestruj wszystkie Service Workery — portal wymaga połączenia z Supabase,
+  // SW nie jest potrzebny i powodował problemy z cacheowaniem.
   if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('/sw.js').catch(()=>{});
+    navigator.serviceWorker.getRegistrations().then(regs => {
+      regs.forEach(r => r.unregister());
+    });
   }
 })();
 
