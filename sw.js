@@ -1,9 +1,11 @@
-const CACHE = 'portal-v1.2.0';
-const SHELL = ['/index.html', '/manifest.json', '/sw.js'];
+// WAŻNE: index.html nigdy nie jest cachowany — zawsze pobierany świeżo z sieci.
+// Zmiana wersji cache wymusza usunięcie starych wpisów u wszystkich użytkowników.
+const CACHE = 'portal-v3.0.0';
+const STATIC = ['/manifest.json'];
 
 self.addEventListener('install', e => {
   e.waitUntil(
-    caches.open(CACHE).then(c => c.addAll(SHELL)).then(() => self.skipWaiting())
+    caches.open(CACHE).then(c => c.addAll(STATIC)).then(() => self.skipWaiting())
   );
 });
 
@@ -19,15 +21,21 @@ self.addEventListener('fetch', e => {
   const url = new URL(e.request.url);
   if (e.request.method !== 'GET') return;
   if (url.origin !== location.origin) return;
+
+  // index.html: ZAWSZE świeży z sieci — nigdy z cache SW
+  // (portal wymaga internetu do działania, cached HTML = stary zepsуty kod)
+  if (url.pathname === '/' || url.pathname === '/index.html') {
+    e.respondWith(fetch(e.request));
+    return;
+  }
+
+  // Inne zasoby (manifest, ikony): sieć-first, cache jako fallback offline
   e.respondWith(
     fetch(e.request)
       .then(res => {
-        if (res.ok) {
-          const clone = res.clone();
-          caches.open(CACHE).then(c => c.put(e.request, clone));
-        }
+        if (res.ok) caches.open(CACHE).then(c => c.put(e.request, res.clone()));
         return res;
       })
-      .catch(() => caches.match(e.request).then(r => r || caches.match('/index.html')))
+      .catch(() => caches.match(e.request))
   );
 });
