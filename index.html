@@ -1,0 +1,972 @@
+<!DOCTYPE html>
+<html lang="pl" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Mój Kocioł — SerwisCiepło</title>
+<meta name="theme-color" content="#1c1917">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Mój Kocioł">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{
+  --bg:#f0ede8;--surface:#fff;--surface2:#f7f4f0;--surface3:#ede9e3;
+  --border:rgba(0,0,0,.08);--border2:rgba(0,0,0,.16);
+  --text:#1c1917;--text2:#78716c;--text3:#a8a29e;
+  --accent:#c2410c;--accent2:#ea580c;--accent-light:#fff7ed;--accent-border:#fed7aa;
+  --blue:#1d4ed8;--blue-light:#eff6ff;--blue-border:#bfdbfe;
+  --green:#15803d;--green-light:#f0fdf4;--green-border:#bbf7d0;
+  --red:#b91c1c;--red-light:#fef2f2;--red-border:#fecaca;
+  --amber:#b45309;--amber-light:#fffbeb;--amber-border:#fde68a;
+  --r:12px;--rs:8px;
+  --shadow:0 1px 3px rgba(0,0,0,.07),0 1px 2px rgba(0,0,0,.05);
+  --shadow-md:0 4px 16px rgba(0,0,0,.1);
+}
+[data-theme="dark"]{
+  --bg:#111010;--surface:#1c1c1c;--surface2:#252525;--surface3:#2f2f2f;
+  --border:rgba(255,255,255,.07);--border2:rgba(255,255,255,.14);
+  --text:#f5f5f4;--text2:#a8a29e;--text3:#57534e;
+  --accent-light:#1f0e05;--accent-border:#6b2d06;
+  --blue-light:#0c1a35;--blue-border:#1e3a6e;
+  --green-light:#071a0e;--green-border:#145228;
+  --red-light:#1a0808;--red-border:#6b1111;
+  --amber-light:#1a1000;--amber-border:#6b3b00;
+  --shadow:0 1px 3px rgba(0,0,0,.35);--shadow-md:0 4px 16px rgba(0,0,0,.45);
+}
+html,body{height:100%;font-family:-apple-system,'Segoe UI',Helvetica,sans-serif;background:var(--bg);color:var(--text);font-size:15px;transition:background .25s,color .25s}
+
+/* ── AUTH ─────────────────────────────────────────────── */
+.auth-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;background:radial-gradient(ellipse at 20% 50%,#1a0a00 0%,#0d0d0d 50%,#050510 100%);position:relative;overflow:hidden}
+.auth-wrap::before,.auth-wrap::after{content:'';position:absolute;border-radius:50%;pointer-events:none}
+.auth-wrap::before{width:500px;height:500px;left:-120px;top:-100px;background:radial-gradient(circle,rgba(194,65,12,.18) 0%,transparent 70%);animation:orb1 8s ease-in-out infinite}
+.auth-wrap::after{width:400px;height:400px;right:-100px;bottom:-80px;background:radial-gradient(circle,rgba(234,88,12,.12) 0%,transparent 70%);animation:orb2 10s ease-in-out infinite}
+@keyframes orb1{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(30px,20px) scale(1.08)}}
+@keyframes orb2{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(-20px,-30px) scale(1.06)}}
+
+.auth-card{background:rgba(255,255,255,.04);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border:1px solid rgba(255,255,255,.08);border-radius:24px;padding:36px 32px;width:100%;max-width:400px;box-shadow:0 32px 80px rgba(0,0,0,.7),inset 0 1px 0 rgba(255,255,255,.06);animation:cardIn .45s cubic-bezier(.22,1,.36,1);position:relative;z-index:1}
+@keyframes cardIn{from{opacity:0;transform:translateY(28px) scale(.97)}to{opacity:1;transform:translateY(0) scale(1)}}
+
+.auth-logo{display:flex;align-items:center;gap:10px;margin-bottom:28px;justify-content:center}
+.auth-logo-flame{width:44px;height:44px;background:linear-gradient(135deg,var(--accent2),#f97316);border-radius:13px;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 20px rgba(234,88,12,.5);animation:flamePulse 2.5s ease-in-out infinite}
+.auth-logo-flame i{font-size:22px;color:#fff}
+@keyframes flamePulse{0%,100%{box-shadow:0 4px 20px rgba(234,88,12,.5)}50%{box-shadow:0 4px 32px rgba(234,88,12,.85)}}
+.auth-logo span{font-size:22px;font-weight:800;letter-spacing:-.5px;color:#fff}
+.auth-logo-sub{font-size:11px;color:rgba(255,255,255,.4);font-weight:500;margin-top:-2px;letter-spacing:.02em}
+
+.auth-title{font-size:18px;font-weight:800;text-align:center;color:#fff}
+.auth-sub{font-size:13px;color:rgba(255,255,255,.45);text-align:center;margin:4px 0 22px}
+.fg{margin-bottom:13px}
+.fg label{font-size:11px;font-weight:700;color:rgba(255,255,255,.45);display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:.05em}
+.fg input{width:100%;padding:12px 14px;border:1.5px solid rgba(255,255,255,.1);border-radius:var(--rs);font-size:14px;color:#fff;outline:none;background:rgba(255,255,255,.06);transition:border-color .2s,background .2s;font-family:inherit}
+.fg input::placeholder{color:rgba(255,255,255,.25)}
+.fg input:focus{border-color:var(--accent2);background:rgba(255,255,255,.1)}
+
+.btn-auth{width:100%;padding:13px;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;border:none;border-radius:var(--rs);font-size:15px;font-weight:700;cursor:pointer;margin-top:10px;transition:opacity .15s,transform .1s;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:8px;position:relative;overflow:hidden}
+.btn-auth::before{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.15),transparent);transform:translateX(-100%);transition:transform .4s}
+.btn-auth:hover::before{transform:translateX(100%)}
+.btn-auth:hover{opacity:.92;transform:translateY(-1px)}
+.btn-auth:active{transform:translateY(0)}
+.btn-auth.loading{opacity:.75;pointer-events:none}
+.btn-auth-spin{width:16px;height:16px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .6s linear infinite;display:none}
+.btn-auth.loading .btn-auth-spin{display:block}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+.auth-switch{text-align:center;margin-top:16px;font-size:13px;color:rgba(255,255,255,.4)}
+.auth-switch a{color:var(--accent2);cursor:pointer;font-weight:600;transition:color .15s}
+.auth-switch a:hover{color:#fb923c}
+.auth-err{background:rgba(185,28,28,.25);color:#fca5a5;border:1px solid rgba(185,28,28,.4);font-size:13px;padding:10px 12px;border-radius:var(--rs);margin-bottom:14px;display:none}
+.auth-err.visible{display:block}
+.auth-info{background:rgba(21,128,61,.25);color:#86efac;border:1px solid rgba(21,128,61,.4);font-size:13px;padding:10px 12px;border-radius:var(--rs);margin-bottom:14px;display:none}
+.auth-info.visible{display:block}
+
+/* ── APP SHELL ────────────────────────────────────────── */
+.app{display:none;flex-direction:column;height:100%;height:100dvh}
+.app.visible{display:flex}
+
+.topbar{background:var(--text);padding:11px 16px;display:flex;align-items:center;gap:12px;flex-shrink:0;z-index:100}
+[data-theme="dark"] .topbar{background:#0a0a0a;border-bottom:1px solid var(--border)}
+.top-logo{font-size:16px;font-weight:800;color:#fff;display:flex;align-items:center;gap:7px}
+.top-logo i{color:var(--accent2);font-size:20px}
+.top-logo-sub{font-size:10px;color:rgba(255,255,255,.38);font-weight:500;margin-left:2px;margin-top:1px}
+.top-actions{display:flex;gap:5px;align-items:center;margin-left:auto}
+.top-btn{background:none;border:none;color:rgba(255,255,255,.6);font-size:20px;cursor:pointer;padding:5px 6px;border-radius:var(--rs);transition:all .15s;line-height:1}
+.top-btn:hover{color:#fff;background:rgba(255,255,255,.1)}
+.user-pill{display:flex;align-items:center;gap:7px;background:rgba(255,255,255,.1);border-radius:20px;padding:5px 10px 5px 5px;cursor:pointer;transition:background .15s}
+.user-pill:hover{background:rgba(255,255,255,.18)}
+.u-av{width:26px;height:26px;border-radius:50%;background:var(--accent2);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;flex-shrink:0}
+.u-name{font-size:12px;color:rgba(255,255,255,.78);max-width:90px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+.content{flex:1;overflow-y:auto;padding:20px 16px 84px;scroll-behavior:smooth}
+@media(min-width:600px){.content{padding:24px 24px 84px;max-width:720px;margin:0 auto;width:100%}}
+
+/* ── BOTTOM NAV ───────────────────────────────────────── */
+.bottom-nav{background:var(--surface);border-top:1px solid var(--border);display:flex;flex-shrink:0;height:64px;padding-bottom:env(safe-area-inset-bottom,0px);box-shadow:0 -2px 16px rgba(0,0,0,.07);z-index:100}
+[data-theme="dark"] .bottom-nav{border-top:1px solid var(--border);box-shadow:0 -2px 16px rgba(0,0,0,.3)}
+.bn-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;background:none;border:none;cursor:pointer;color:var(--text3);font-size:10px;font-weight:600;padding:8px 4px;transition:color .15s;font-family:inherit;-webkit-tap-highlight-color:transparent}
+.bn-item i{font-size:22px;transition:transform .15s}
+.bn-item.active{color:var(--accent)}
+.bn-item.active i{transform:translateY(-1px)}
+.bn-item:active i{transform:scale(.9)}
+
+/* ── VIEWS ────────────────────────────────────────────── */
+.view{display:none;animation:fadeIn .2s ease}
+.view.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+
+/* ── SECTION HEADER ───────────────────────────────────── */
+.sec-hdr{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:20px;gap:12px}
+.sec-title{font-size:20px;font-weight:800;letter-spacing:-.4px}
+.sec-sub{font-size:13px;color:var(--text2);margin-top:2px}
+
+/* ── CARD ─────────────────────────────────────────────── */
+.card{background:var(--surface);border-radius:var(--r);border:1px solid var(--border);box-shadow:var(--shadow);padding:18px;margin-bottom:14px}
+.card-title{font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:14px;display:flex;align-items:center;gap:6px}
+.card-title i{font-size:14px}
+
+/* ── BOILER HERO ──────────────────────────────────────── */
+.boiler-hero{background:linear-gradient(135deg,#9a3412 0%,#c2410c 40%,#ea580c 75%,#f97316 100%);border-radius:16px;padding:22px 20px;color:#fff;margin-bottom:14px;position:relative;overflow:hidden;box-shadow:0 6px 24px rgba(194,65,12,.35)}
+.boiler-hero::before{content:'';position:absolute;right:-30px;top:-30px;width:140px;height:140px;background:rgba(255,255,255,.07);border-radius:50%}
+.boiler-hero::after{content:'';position:absolute;right:24px;bottom:-40px;width:90px;height:90px;background:rgba(255,255,255,.05);border-radius:50%}
+.boiler-hero-ico{font-size:38px;margin-bottom:10px;opacity:.9;position:relative;z-index:1}
+.boiler-model{font-size:18px;font-weight:800;letter-spacing:-.3px;position:relative;z-index:1;line-height:1.2}
+.boiler-serial{font-size:12px;opacity:.72;margin-top:3px;position:relative;z-index:1;font-weight:500}
+.boiler-none{font-size:14px;opacity:.75;position:relative;z-index:1;font-style:italic}
+.boiler-hero-row{display:flex;align-items:center;justify-content:space-between;position:relative;z-index:1;margin-top:12px;padding-top:12px;border-top:1px solid rgba(255,255,255,.15)}
+.boiler-hero-stat{text-align:center}
+.boiler-hero-stat-val{font-size:13px;font-weight:700}
+.boiler-hero-stat-lbl{font-size:10px;opacity:.65;font-weight:500;margin-top:1px;text-transform:uppercase;letter-spacing:.04em}
+
+/* ── COUNTDOWN CARD ───────────────────────────────────── */
+.countdown-card{border-radius:var(--r);border:1px solid var(--border);padding:18px;margin-bottom:14px;background:var(--surface);box-shadow:var(--shadow);position:relative;overflow:hidden}
+.countdown-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;border-radius:4px 0 0 4px}
+.countdown-card.ok::before{background:var(--green)}
+.countdown-card.warn::before{background:var(--amber)}
+.countdown-card.due::before{background:var(--red)}
+.countdown-card.none::before{background:var(--text3)}
+.countdown-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.countdown-lbl{font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.07em}
+.countdown-badge{font-size:11px;font-weight:700;padding:3px 9px;border-radius:6px}
+.countdown-badge.ok{background:var(--green-light);color:var(--green)}
+.countdown-badge.warn{background:var(--amber-light);color:var(--amber)}
+.countdown-badge.due{background:var(--red-light);color:var(--red)}
+.countdown-badge.none{background:var(--surface3);color:var(--text3)}
+.countdown-num{font-size:52px;font-weight:800;line-height:1;letter-spacing:-3px;margin-bottom:2px}
+.countdown-num.ok{color:var(--green)}
+.countdown-num.warn{color:var(--amber)}
+.countdown-num.due{color:var(--red)}
+.countdown-num.none{color:var(--text3)}
+.countdown-unit{font-size:13px;font-weight:600;color:var(--text2);margin-bottom:10px}
+.countdown-date{font-size:13px;color:var(--text2);display:flex;align-items:center;gap:6px;font-weight:500}
+.countdown-date i{font-size:15px;color:var(--text3)}
+
+/* ── STATS ROW ────────────────────────────────────────── */
+.stats-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:14px;text-align:center;box-shadow:var(--shadow)}
+.stat-num{font-size:34px;font-weight:800;line-height:1;letter-spacing:-2px}
+.stat-lbl{font-size:10px;color:var(--text2);margin-top:5px;font-weight:600;text-transform:uppercase;letter-spacing:.04em}
+
+/* ── LAST SERVICE ─────────────────────────────────────── */
+.last-svc{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:14px 16px;box-shadow:var(--shadow)}
+.last-svc-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.last-svc-title{font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.07em}
+.last-svc-date{font-size:12px;color:var(--text2);font-weight:600}
+.last-svc-desc{font-size:13px;color:var(--text);line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.last-svc-empty{font-size:13px;color:var(--text3);font-style:italic;padding:4px 0}
+
+/* ── SERVICE ITEMS ────────────────────────────────────── */
+.svc-item{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:14px 16px;margin-bottom:10px;box-shadow:var(--shadow);position:relative}
+.svc-item.wip{border-left:3px solid var(--amber)}
+.svc-meta{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;gap:8px;flex-wrap:wrap}
+.svc-date{font-size:12px;color:var(--text3);font-weight:600;display:flex;align-items:center;gap:4px}
+.svc-date i{font-size:13px}
+.svc-badge{font-size:10.5px;font-weight:700;padding:3px 8px;border-radius:6px}
+.svc-badge.done{background:var(--green-light);color:var(--green)}
+.svc-badge.wip{background:var(--amber-light);color:var(--amber)}
+.svc-desc{font-size:13px;line-height:1.55;color:var(--text)}
+
+/* ── DETAIL FIELDS ────────────────────────────────────── */
+.detail-section{margin-bottom:20px}
+.detail-section-title{font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:12px;display:flex;align-items:center;gap:6px;padding-bottom:8px;border-bottom:1px solid var(--border)}
+.detail-section-title i{font-size:15px}
+.fields-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px 20px}
+.field label{font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:3px}
+.field span{font-size:14px;font-weight:500;word-break:break-word}
+.field span.empty{color:var(--text3);font-style:italic;font-size:13px}
+.field-full{grid-column:1/-1}
+
+/* ── CONTACT VIEW ─────────────────────────────────────── */
+.contact-hero{background:linear-gradient(135deg,#1e3a5f 0%,#1d4ed8 100%);border-radius:16px;padding:22px 20px;color:#fff;margin-bottom:14px;text-align:center;position:relative;overflow:hidden;box-shadow:0 6px 24px rgba(29,78,216,.3)}
+.contact-hero::before{content:'';position:absolute;left:-30px;top:-30px;width:120px;height:120px;background:rgba(255,255,255,.06);border-radius:50%}
+.contact-hero-ico{font-size:44px;margin-bottom:12px}
+.contact-hero-name{font-size:18px;font-weight:800;margin-bottom:4px}
+.contact-hero-sub{font-size:12px;opacity:.7}
+.contact-btns{display:flex;flex-direction:column;gap:10px;margin-bottom:14px}
+.btn-contact{display:flex;align-items:center;justify-content:center;gap:10px;padding:14px 20px;border-radius:var(--rs);font-size:15px;font-weight:700;cursor:pointer;border:none;font-family:inherit;transition:all .15s;text-decoration:none}
+.btn-contact.call{background:var(--green-light);color:var(--green);border:1px solid var(--green-border)}
+.btn-contact.call:hover{background:var(--green-border)}
+.btn-contact.email{background:var(--blue-light);color:var(--blue);border:1px solid var(--blue-border)}
+.btn-contact.email:hover{background:var(--blue-border)}
+.btn-contact i{font-size:20px}
+.contact-info-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:16px;box-shadow:var(--shadow)}
+.contact-info-row{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border)}
+.contact-info-row:last-child{border:none;padding-bottom:0}
+.contact-info-ico{width:36px;height:36px;border-radius:var(--rs);display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0}
+.contact-info-ico.orange{background:var(--accent-light);color:var(--accent)}
+.contact-info-ico.blue{background:var(--blue-light);color:var(--blue)}
+.contact-info-ico.green{background:var(--green-light);color:var(--green)}
+.contact-info-lbl{font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:2px}
+.contact-info-val{font-size:14px;font-weight:600;color:var(--text)}
+
+/* ── BUTTONS ──────────────────────────────────────────── */
+.btn{display:inline-flex;align-items:center;gap:7px;padding:10px 16px;border-radius:var(--rs);font-size:13px;font-weight:700;cursor:pointer;border:none;transition:all .15s;white-space:nowrap;font-family:inherit}
+.btn-primary{background:var(--accent);color:#fff}
+.btn-primary:hover{background:var(--accent2)}
+.btn-outline{background:var(--surface);color:var(--text2);border:1px solid var(--border2)}
+.btn-outline:hover{background:var(--surface2);color:var(--text)}
+.btn-sm{padding:7px 12px;font-size:12px}
+
+/* ── PENDING SCREEN ───────────────────────────────────── */
+.pending-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;background:radial-gradient(ellipse at 20% 50%,#1a0a00 0%,#0d0d0d 50%,#050510 100%)}
+.pending-card{background:rgba(255,255,255,.04);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border:1px solid rgba(255,255,255,.08);border-radius:24px;padding:40px 32px;width:100%;max-width:420px;text-align:center;box-shadow:0 32px 80px rgba(0,0,0,.7);animation:cardIn .45s cubic-bezier(.22,1,.36,1)}
+.pending-ico{font-size:54px;color:var(--amber);display:block;margin-bottom:20px;animation:flamePulse 2.5s ease-in-out infinite}
+.pending-title{font-size:18px;font-weight:800;color:#fff;margin-bottom:8px}
+.pending-msg{font-size:14px;color:rgba(255,255,255,.5);line-height:1.65;margin-bottom:24px}
+.pending-email{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:var(--rs);padding:10px 14px;font-size:13px;color:rgba(255,255,255,.7);margin-bottom:20px;word-break:break-all}
+.pending-email strong{color:#fff;font-weight:700}
+.btn-pending-logout{width:100%;padding:12px;background:rgba(255,255,255,.08);color:rgba(255,255,255,.7);border:1px solid rgba(255,255,255,.12);border-radius:var(--rs);font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;transition:background .15s}
+.btn-pending-logout:hover{background:rgba(255,255,255,.14)}
+
+/* ── TOAST ────────────────────────────────────────────── */
+.toast{position:fixed;bottom:78px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--text);color:#fff;padding:10px 18px;border-radius:20px;font-size:13px;font-weight:600;white-space:nowrap;z-index:9999;opacity:0;transition:all .25s;pointer-events:none;box-shadow:var(--shadow-md)}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* ── LOGOUT MODAL ─────────────────────────────────────── */
+.modal-ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:2000;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(4px)}
+.modal-ov.visible{display:flex;animation:fadeIn .2s ease}
+.modal-box{background:var(--surface);border-radius:20px;padding:28px 24px;width:100%;max-width:320px;text-align:center;box-shadow:0 24px 64px rgba(0,0,0,.4);animation:cardIn .3s cubic-bezier(.22,1,.36,1)}
+.modal-ico{width:56px;height:56px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;font-size:24px}
+.modal-ico.logout{background:var(--red-light);border:2px solid var(--red-border);color:var(--red)}
+.modal-title{font-size:17px;font-weight:800;margin-bottom:6px}
+.modal-sub{font-size:13px;color:var(--text2);margin-bottom:22px}
+.modal-actions{display:flex;gap:10px}
+.modal-actions .btn{flex:1;justify-content:center}
+
+/* ── EMPTY STATE ──────────────────────────────────────── */
+.empty-state{text-align:center;padding:40px 20px;color:var(--text3)}
+.empty-state i{font-size:48px;display:block;margin-bottom:14px;opacity:.5}
+.empty-state p{font-size:14px;line-height:1.6}
+
+/* ── LOADING ──────────────────────────────────────────── */
+.loader-wrap{display:flex;align-items:center;justify-content:center;min-height:200px}
+.loader{width:28px;height:28px;border:3px solid var(--border2);border-top-color:var(--accent2);border-radius:50%;animation:spin .7s linear infinite}
+
+/* ── IOS INSTALL BANNER ───────────────────────────────── */
+.ios-banner{display:none;position:fixed;bottom:0;left:0;right:0;background:var(--surface);border-top:2px solid var(--accent);padding:14px 16px calc(14px + env(safe-area-inset-bottom,0px));z-index:200;box-shadow:0 -4px 20px rgba(0,0,0,.15)}
+.ios-banner.show{display:block}
+.ios-banner-title{font-size:14px;font-weight:700;margin-bottom:5px;display:flex;align-items:center;gap:8px}
+.ios-banner-title i{color:var(--accent2)}
+.ios-banner-steps{font-size:12px;color:var(--text2);line-height:1.8}
+.ios-banner-steps strong{color:var(--text)}
+.ios-banner-close{position:absolute;top:10px;right:12px;background:none;border:none;font-size:20px;color:var(--text3);cursor:pointer;padding:4px}
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════
+     AUTH SCREEN
+════════════════════════════════════════════════════════ -->
+<div id="authWrap" class="auth-wrap" style="display:none">
+  <div class="auth-card">
+    <div class="auth-logo">
+      <div class="auth-logo-flame"><i class="ti ti-flame"></i></div>
+      <div>
+        <div style="font-size:22px;font-weight:800;letter-spacing:-.5px;color:#fff">SerwisCiepło</div>
+        <div class="auth-logo-sub">Portal Klienta</div>
+      </div>
+    </div>
+
+    <!-- LOGIN -->
+    <div id="formLogin">
+      <div class="auth-title">Zaloguj się</div>
+      <div class="auth-sub">Sprawdź stan swojego kotła</div>
+      <div class="auth-err" id="loginErr"></div>
+      <div class="fg"><label>Email</label><input type="email" id="lEmail" placeholder="twoj@email.pl" autocomplete="email" autocapitalize="none"></div>
+      <div class="fg"><label>Hasło</label><input type="password" id="lPass" placeholder="••••••••" autocomplete="current-password"></div>
+      <button class="btn-auth" id="btnLogin" onclick="doLogin()">
+        <div class="btn-auth-spin"></div>
+        <span>Zaloguj się</span>
+      </button>
+      <div class="auth-switch">
+        <a onclick="showForm('formReset')">Zapomniałem hasła</a>
+        &nbsp;·&nbsp;
+        <a onclick="showForm('formRegister')">Zarejestruj się</a>
+      </div>
+    </div>
+
+    <!-- REGISTER -->
+    <div id="formRegister" style="display:none">
+      <div class="auth-title">Utwórz konto</div>
+      <div class="auth-sub">Zarejestruj się używając emaila podanego serwisantowi</div>
+      <div class="auth-err" id="regErr"></div>
+      <div class="auth-info" id="regInfo"></div>
+      <div class="fg"><label>Imię i nazwisko</label><input type="text" id="rName" placeholder="Jan Kowalski" autocomplete="name"></div>
+      <div class="fg"><label>Email</label><input type="email" id="rEmail" placeholder="twoj@email.pl" autocomplete="email" autocapitalize="none"></div>
+      <div class="fg"><label>Hasło (min. 8 znaków)</label><input type="password" id="rPass" placeholder="••••••••" autocomplete="new-password"></div>
+      <button class="btn-auth" id="btnReg" onclick="doRegister()">
+        <div class="btn-auth-spin"></div>
+        <span>Utwórz konto</span>
+      </button>
+      <div class="auth-switch"><a onclick="showForm('formLogin')">Mam już konto — zaloguj się</a></div>
+    </div>
+
+    <!-- RESET -->
+    <div id="formReset" style="display:none">
+      <div class="auth-title">Resetuj hasło</div>
+      <div class="auth-sub">Wyślemy Ci link do ustawienia nowego hasła</div>
+      <div class="auth-err" id="resetErr"></div>
+      <div class="auth-info" id="resetInfo"></div>
+      <div class="fg"><label>Email</label><input type="email" id="resetEmail" placeholder="twoj@email.pl" autocomplete="email" autocapitalize="none"></div>
+      <button class="btn-auth" id="btnReset" onclick="doReset()">
+        <div class="btn-auth-spin"></div>
+        <span>Wyślij link</span>
+      </button>
+      <div class="auth-switch"><a onclick="showForm('formLogin')">Powrót do logowania</a></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════
+     PENDING / NOT LINKED SCREEN
+════════════════════════════════════════════════════════ -->
+<div id="pendingWrap" class="pending-wrap" style="display:none">
+  <div class="pending-card">
+    <i class="ti ti-clock-hour-3 pending-ico"></i>
+    <div class="pending-title">Konto niepowiązane</div>
+    <div class="pending-msg">Twoje konto nie zostało jeszcze powiązane z żadną kartą klienta. Skontaktuj się ze swoim serwisantem i poproś o dodanie poniższego adresu email do Twojego profilu.</div>
+    <div class="pending-email">Zalogowany jako:<br><strong id="pendingEmail"></strong></div>
+    <div class="pending-msg" style="font-size:12px;margin-bottom:16px">Po powiązaniu konta przez serwisanta — odśwież tę stronę.</div>
+    <button class="btn-pending-logout" onclick="doLogout()">
+      <i class="ti ti-logout" style="margin-right:6px"></i>Wyloguj się
+    </button>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════
+     PORTAL APP
+════════════════════════════════════════════════════════ -->
+<div id="app" class="app">
+
+  <!-- TOPBAR -->
+  <header class="topbar">
+    <div class="top-logo">
+      <i class="ti ti-flame"></i>
+      <div>
+        <div>SerwisCiepło</div>
+        <div class="top-logo-sub">Portal Klienta</div>
+      </div>
+    </div>
+    <div class="top-actions">
+      <button class="top-btn" id="themeBtn" onclick="toggleTheme()" title="Zmień motyw"></button>
+      <div class="user-pill" onclick="openLogoutModal()">
+        <div class="u-av" id="userAv">?</div>
+        <span class="u-name" id="userName"></span>
+      </div>
+    </div>
+  </header>
+
+  <!-- CONTENT -->
+  <div class="content" id="content">
+
+    <!-- VIEW: PULPIT -->
+    <div class="view active" id="viewDashboard">
+      <div id="dashContent">
+        <div class="loader-wrap"><div class="loader"></div></div>
+      </div>
+    </div>
+
+    <!-- VIEW: SERWISY -->
+    <div class="view" id="viewSerwisy">
+      <div class="sec-hdr">
+        <div>
+          <div class="sec-title">Historia serwisów</div>
+          <div class="sec-sub" id="svcsSubtitle">Ładowanie…</div>
+        </div>
+      </div>
+      <div id="svcsContent">
+        <div class="loader-wrap"><div class="loader"></div></div>
+      </div>
+    </div>
+
+    <!-- VIEW: MOJE DANE -->
+    <div class="view" id="viewDane">
+      <div class="sec-hdr">
+        <div>
+          <div class="sec-title">Moje dane</div>
+          <div class="sec-sub">Twój profil i dane kotła</div>
+        </div>
+      </div>
+      <div id="daneContent">
+        <div class="loader-wrap"><div class="loader"></div></div>
+      </div>
+    </div>
+
+    <!-- VIEW: KONTAKT -->
+    <div class="view" id="viewKontakt">
+      <div class="sec-hdr">
+        <div>
+          <div class="sec-title">Kontakt</div>
+          <div class="sec-sub">Skontaktuj się z serwisantem</div>
+        </div>
+      </div>
+      <div id="kontaktContent"></div>
+    </div>
+
+  </div><!-- /content -->
+
+  <!-- BOTTOM NAV -->
+  <nav class="bottom-nav">
+    <button class="bn-item active" id="bn-dashboard" onclick="switchView('dashboard')">
+      <i class="ti ti-home-2"></i><span>Pulpit</span>
+    </button>
+    <button class="bn-item" id="bn-serwisy" onclick="switchView('serwisy')">
+      <i class="ti ti-list-details"></i><span>Serwisy</span>
+    </button>
+    <button class="bn-item" id="bn-dane" onclick="switchView('dane')">
+      <i class="ti ti-user-circle"></i><span>Moje dane</span>
+    </button>
+    <button class="bn-item" id="bn-kontakt" onclick="switchView('kontakt')">
+      <i class="ti ti-phone"></i><span>Kontakt</span>
+    </button>
+  </nav>
+
+</div><!-- /app -->
+
+<!-- LOGOUT MODAL -->
+<div class="modal-ov" id="logoutModal">
+  <div class="modal-box">
+    <div class="modal-ico logout"><i class="ti ti-logout"></i></div>
+    <div class="modal-title">Wylogować się?</div>
+    <div class="modal-sub">Zostaniesz przekierowany do ekranu logowania.</div>
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="closeModal('logoutModal')">Anuluj</button>
+      <button class="btn btn-primary" style="background:var(--red);border-color:var(--red)" onclick="doLogout()">Wyloguj</button>
+    </div>
+  </div>
+</div>
+
+<!-- iOS INSTALL BANNER -->
+<div class="ios-banner" id="iosBanner">
+  <button class="ios-banner-close" onclick="dismissIosBanner()"><i class="ti ti-x"></i></button>
+  <div class="ios-banner-title"><i class="ti ti-download"></i> Dodaj do ekranu głównego</div>
+  <div class="ios-banner-steps">
+    Naciśnij <strong><i class="ti ti-share" style="font-size:13px"></i> Udostępnij</strong> →
+    <strong>Dodaj do ekranu głównego</strong>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+'use strict';
+
+/* ── KONFIGURACJA ──────────────────────────────────── */
+const SB_URL   = 'https://dzekzfxhqxiifuaesjum.supabase.co';
+const SB_KEY   = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR6ZWt6ZnhocXhpaWZ1YWVzanVtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg2MDY3ODEsImV4cCI6MjA5NDE4Mjc4MX0.SUFa62jSD0pThTtyN1n7eUKWRtPD42v4JP5vRNPf9fA';
+const sb       = supabase.createClient(SB_URL, SB_KEY);
+const footerVersion = 'v1.0.0';
+
+/* ── DANE KONTAKTOWE SERWISANTA ─────────────────────
+   Dostosuj te wartości do swoich danych kontaktowych  */
+const SERWISANT_NAME    = 'SerwisCiepło';
+const SERWISANT_PHONE   = '+48 600 000 000';
+const SERWISANT_EMAIL   = 'serwis@serwiscieplo.pl';
+const SERWISANT_HOURS   = 'Pn – Pt, 7:00–17:00';
+
+/* ── STAN APLIKACJI ─────────────────────────────── */
+let curUser     = null;
+let curClient   = null;
+let curServices = [];
+let curView     = 'dashboard';
+let dataLoaded  = false;
+
+/* ── HELPERS ────────────────────────────────────── */
+const esc = s => String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+
+function showToast(msg, duration = 2500) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), duration);
+}
+
+function formatDate(dateStr) {
+  if (!dateStr) return '—';
+  const [y, m, d] = dateStr.split('-');
+  const months = ['stycznia','lutego','marca','kwietnia','maja','czerwca','lipca','sierpnia','września','października','listopada','grudnia'];
+  return `${parseInt(d)} ${months[parseInt(m) - 1]} ${y}`;
+}
+
+function getDaysUntil(dateStr) {
+  if (!dateStr) return null;
+  const today = new Date(); today.setHours(0,0,0,0);
+  const target = new Date(dateStr); target.setHours(0,0,0,0);
+  return Math.round((target - today) / 86400000);
+}
+
+function getCountdownClass(days) {
+  if (days === null) return 'none';
+  if (days < 0) return 'due';
+  if (days <= 60) return 'warn';
+  return 'ok';
+}
+
+/* ── THEME ──────────────────────────────────────── */
+function initTheme() {
+  const saved = localStorage.getItem('portal_theme') || 'light';
+  document.documentElement.setAttribute('data-theme', saved);
+  updateThemeBtn(saved);
+}
+
+function toggleTheme() {
+  const cur = document.documentElement.getAttribute('data-theme');
+  const next = cur === 'light' ? 'dark' : 'light';
+  document.documentElement.setAttribute('data-theme', next);
+  localStorage.setItem('portal_theme', next);
+  updateThemeBtn(next);
+}
+
+function updateThemeBtn(theme) {
+  const btn = document.getElementById('themeBtn');
+  if (btn) btn.innerHTML = theme === 'light'
+    ? '<i class="ti ti-moon"></i>'
+    : '<i class="ti ti-sun"></i>';
+}
+
+/* ── AUTH FORMS ─────────────────────────────────── */
+function showForm(id) {
+  ['formLogin','formRegister','formReset'].forEach(f => {
+    document.getElementById(f).style.display = f === id ? '' : 'none';
+  });
+  ['loginErr','regErr','regInfo','resetErr','resetInfo'].forEach(e => {
+    const el = document.getElementById(e);
+    if (el) el.classList.remove('visible');
+  });
+}
+
+function setAuthLoading(btnId, loading) {
+  const btn = document.getElementById(btnId);
+  if (!btn) return;
+  btn.classList.toggle('loading', loading);
+}
+
+async function doLogin() {
+  const email = document.getElementById('lEmail').value.trim();
+  const pass  = document.getElementById('lPass').value;
+  const err   = document.getElementById('loginErr');
+  err.classList.remove('visible');
+  if (!email || !pass) { err.textContent = 'Wypełnij wszystkie pola.'; err.classList.add('visible'); return; }
+  setAuthLoading('btnLogin', true);
+  const { error } = await sb.auth.signInWithPassword({ email, password: pass });
+  setAuthLoading('btnLogin', false);
+  if (error) { err.textContent = 'Błędny email lub hasło.'; err.classList.add('visible'); }
+}
+
+async function doRegister() {
+  const name  = document.getElementById('rName').value.trim();
+  const email = document.getElementById('rEmail').value.trim();
+  const pass  = document.getElementById('rPass').value;
+  const err   = document.getElementById('regErr');
+  const info  = document.getElementById('regInfo');
+  err.classList.remove('visible'); info.classList.remove('visible');
+  if (!name || !email || !pass) { err.textContent = 'Wypełnij wszystkie pola.'; err.classList.add('visible'); return; }
+  if (pass.length < 8) { err.textContent = 'Hasło musi mieć co najmniej 8 znaków.'; err.classList.add('visible'); return; }
+  setAuthLoading('btnReg', true);
+  const { error } = await sb.auth.signUp({ email, password: pass, options: { data: { full_name: name } } });
+  setAuthLoading('btnReg', false);
+  if (error) { err.textContent = error.message || 'Błąd rejestracji.'; err.classList.add('visible'); return; }
+  info.textContent = 'Konto zostało utworzone. Sprawdź skrzynkę email i potwierdź adres, a następnie zaloguj się.';
+  info.classList.add('visible');
+}
+
+async function doReset() {
+  const email = document.getElementById('resetEmail').value.trim();
+  const err   = document.getElementById('resetErr');
+  const info  = document.getElementById('resetInfo');
+  err.classList.remove('visible'); info.classList.remove('visible');
+  if (!email) { err.textContent = 'Podaj adres email.'; err.classList.add('visible'); return; }
+  setAuthLoading('btnReset', true);
+  const { error } = await sb.auth.resetPasswordForEmail(email, {
+    redirectTo: window.location.origin + '/'
+  });
+  setAuthLoading('btnReset', false);
+  if (error) { err.textContent = 'Błąd: ' + error.message; err.classList.add('visible'); return; }
+  info.textContent = 'Link do resetowania hasła wysłany na ' + email + '. Sprawdź skrzynkę pocztową.';
+  info.classList.add('visible');
+}
+
+async function doLogout() {
+  closeModal('logoutModal');
+  await sb.auth.signOut();
+}
+
+/* ── MODALS ─────────────────────────────────────── */
+function openLogoutModal() {
+  document.getElementById('logoutModal').classList.add('visible');
+}
+
+function closeModal(id) {
+  document.getElementById(id).classList.remove('visible');
+}
+
+document.getElementById('logoutModal').addEventListener('click', e => {
+  if (e.target === e.currentTarget) closeModal('logoutModal');
+});
+
+/* ── DATA LOADING ───────────────────────────────── */
+async function loadData(user) {
+  const { data: client } = await sb
+    .from('klienci')
+    .select('*')
+    .eq('email', user.email)
+    .maybeSingle();
+  if (!client) return null;
+
+  const { data: services } = await sb
+    .from('serwisy')
+    .select('*')
+    .eq('klient_id', client.id)
+    .order('data_serwisu', { ascending: false });
+
+  return { client, services: services || [] };
+}
+
+/* ── RENDER: DASHBOARD ───────────────────────────── */
+function renderDashboard() {
+  const c = curClient;
+  const svcs = curServices;
+  const name = c.imie_nazwisko || curUser.email;
+  const firstName = name.split(' ')[0];
+  const days = getDaysUntil(c.nastepny_przeglad);
+  const cls = getCountdownClass(days);
+
+  let countdownHTML;
+  if (days === null) {
+    countdownHTML = `
+      <div class="countdown-num none">—</div>
+      <div class="countdown-unit">brak daty przeglądu</div>`;
+  } else if (days < 0) {
+    countdownHTML = `
+      <div class="countdown-num due">${Math.abs(days)}</div>
+      <div class="countdown-unit">dni po terminie!</div>
+      <div class="countdown-date"><i class="ti ti-calendar-x"></i>${formatDate(c.nastepny_przeglad)}</div>`;
+  } else if (days === 0) {
+    countdownHTML = `
+      <div class="countdown-num warn">Dziś</div>
+      <div class="countdown-unit">termin przeglądu</div>
+      <div class="countdown-date"><i class="ti ti-calendar"></i>${formatDate(c.nastepny_przeglad)}</div>`;
+  } else {
+    countdownHTML = `
+      <div class="countdown-num ${cls}">${days}</div>
+      <div class="countdown-unit">dni do przeglądu</div>
+      <div class="countdown-date"><i class="ti ti-calendar-event"></i>${formatDate(c.nastepny_przeglad)}</div>`;
+  }
+
+  let badgeText = '—';
+  if (days === null) badgeText = 'Brak terminu';
+  else if (days < 0)  badgeText = 'Po terminie';
+  else if (days <= 60) badgeText = 'Wkrótce';
+  else badgeText = 'Na bieżąco';
+
+  const lastSvc = svcs[0];
+  const lastSvcHTML = lastSvc
+    ? `<div class="last-svc-hdr">
+         <div class="last-svc-title"><i class="ti ti-tool" style="font-size:13px"></i> Ostatni serwis</div>
+         <div class="last-svc-date">${formatDate(lastSvc.data_serwisu)}</div>
+       </div>
+       ${lastSvc.status === 'w_realizacji'
+         ? '<div style="margin-bottom:6px"><span class="svc-badge wip"><i class="ti ti-progress" style="font-size:11px"></i> W realizacji</span></div>'
+         : ''}
+       <div class="last-svc-desc">${esc(lastSvc.opis)}</div>`
+    : `<div class="last-svc-title"><i class="ti ti-tool" style="font-size:13px"></i> Ostatni serwis</div>
+       <div class="last-svc-empty">Brak wpisów serwisowych</div>`;
+
+  document.getElementById('dashContent').innerHTML = `
+    <div class="sec-hdr" style="margin-bottom:16px">
+      <div>
+        <div class="sec-title">Dzień dobry, ${esc(firstName)}</div>
+        <div class="sec-sub">Stan Twojego kotła</div>
+      </div>
+    </div>
+
+    <div class="boiler-hero">
+      <div class="boiler-hero-ico"><i class="ti ti-flame"></i></div>
+      ${c.kociol
+        ? `<div class="boiler-model">${esc(c.kociol)}</div>
+           ${c.nr_seryjny ? `<div class="boiler-serial">Nr seryjny: ${esc(c.nr_seryjny)}</div>` : ''}`
+        : `<div class="boiler-none">Brak danych o kotle</div>`}
+      ${(c.data_instalacji || c.kociol) ? `
+      <div class="boiler-hero-row">
+        ${c.data_instalacji ? `<div class="boiler-hero-stat">
+          <div class="boiler-hero-stat-val">${formatDate(c.data_instalacji)}</div>
+          <div class="boiler-hero-stat-lbl">Data instalacji</div>
+        </div>` : ''}
+        ${c.nastepny_przeglad ? `<div class="boiler-hero-stat">
+          <div class="boiler-hero-stat-val">${formatDate(c.nastepny_przeglad)}</div>
+          <div class="boiler-hero-stat-lbl">Następny przegląd</div>
+        </div>` : ''}
+      </div>` : ''}
+    </div>
+
+    <div class="countdown-card ${cls}">
+      <div class="countdown-top">
+        <div class="countdown-lbl"><i class="ti ti-calendar-stats" style="font-size:13px"></i> Następny przegląd</div>
+        <div class="countdown-badge ${cls}">${badgeText}</div>
+      </div>
+      ${countdownHTML}
+    </div>
+
+    <div class="stats-row">
+      <div class="stat-card">
+        <div class="stat-num">${svcs.length}</div>
+        <div class="stat-lbl">Serwisów łącznie</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num" style="font-size:${lastSvc ? '18px' : '34px'};letter-spacing:-1px">
+          ${lastSvc ? formatDate(lastSvc.data_serwisu).replace(/ \d{4}$/,'') : '—'}
+        </div>
+        <div class="stat-lbl">Ostatni serwis</div>
+      </div>
+    </div>
+
+    <div class="last-svc">${lastSvcHTML}</div>
+
+    <div style="text-align:center;padding:16px 0;font-size:11px;color:var(--text3)">${footerVersion} · portal.serwiscieplo.pl</div>
+  `;
+}
+
+/* ── RENDER: SERWISY ─────────────────────────────── */
+function renderSerwisy() {
+  const svcs = curServices;
+  document.getElementById('svcsSubtitle').textContent =
+    svcs.length ? `${svcs.length} wpis${svcs.length === 1 ? '' : svcs.length < 5 ? 'y' : 'ów'}` : 'Brak wpisów';
+
+  if (!svcs.length) {
+    document.getElementById('svcsContent').innerHTML = `
+      <div class="empty-state">
+        <i class="ti ti-tool"></i>
+        <p>Brak historii serwisów.<br>Twoje serwisy pojawią się tutaj po wykonaniu pierwszego przeglądu.</p>
+      </div>`;
+    return;
+  }
+
+  document.getElementById('svcsContent').innerHTML = svcs.map(s => `
+    <div class="svc-item${s.status === 'w_realizacji' ? ' wip' : ''}">
+      <div class="svc-meta">
+        <div class="svc-date"><i class="ti ti-calendar"></i>${formatDate(s.data_serwisu)}</div>
+        <span class="svc-badge ${s.status === 'w_realizacji' ? 'wip' : 'done'}">
+          ${s.status === 'w_realizacji'
+            ? '<i class="ti ti-progress" style="font-size:11px"></i> W realizacji'
+            : '<i class="ti ti-check" style="font-size:11px"></i> Zakończony'}
+        </span>
+      </div>
+      <div class="svc-desc">${esc(s.opis)}</div>
+    </div>`).join('');
+}
+
+/* ── RENDER: MOJE DANE ───────────────────────────── */
+function renderDane() {
+  const c = curClient;
+  const fld = (val, empty = '—') => val
+    ? `<span>${esc(val)}</span>`
+    : `<span class="empty">${empty}</span>`;
+
+  document.getElementById('daneContent').innerHTML = `
+    <div class="detail-section">
+      <div class="detail-section-title"><i class="ti ti-user"></i> Dane kontaktowe</div>
+      <div class="fields-grid">
+        <div class="field field-full"><label>Imię i nazwisko</label>${fld(c.imie_nazwisko)}</div>
+        <div class="field"><label>Telefon</label>${c.telefon
+          ? `<span><a href="tel:${esc(c.telefon)}" class="phone-link" style="color:var(--blue);text-decoration:none;font-weight:600">${esc(c.telefon)}</a></span>`
+          : `<span class="empty">—</span>`}
+        </div>
+        <div class="field"><label>Email</label>${fld(c.email)}</div>
+        <div class="field field-full"><label>Adres</label>${fld(c.adres)}</div>
+      </div>
+    </div>
+
+    <div class="detail-section">
+      <div class="detail-section-title"><i class="ti ti-flame"></i> Kocioł grzewczy</div>
+      <div class="fields-grid">
+        <div class="field field-full"><label>Model kotła</label>${fld(c.kociol,'Nie określono')}</div>
+        <div class="field"><label>Nr seryjny</label>${fld(c.nr_seryjny)}</div>
+        <div class="field"><label>Data instalacji</label>${fld(c.data_instalacji ? formatDate(c.data_instalacji) : null)}</div>
+        <div class="field"><label>Następny przegląd</label>${fld(c.nastepny_przeglad ? formatDate(c.nastepny_przeglad) : null)}</div>
+        ${c.sw_wyswietlacz ? `<div class="field"><label>Wer. opr. wyświetlacza</label>${fld(c.sw_wyswietlacz)}</div>` : ''}
+        ${c.sw_modul ? `<div class="field"><label>Wer. opr. modułu</label>${fld(c.sw_modul)}</div>` : ''}
+      </div>
+    </div>
+
+    ${c.notatki ? `
+    <div class="detail-section">
+      <div class="detail-section-title"><i class="ti ti-notes"></i> Notatki serwisanta</div>
+      <div style="font-size:13px;line-height:1.6;color:var(--text2)">${esc(c.notatki)}</div>
+    </div>` : ''}
+
+    <div style="text-align:center;padding:16px 0;font-size:11px;color:var(--text3)">${footerVersion} · portal.serwiscieplo.pl</div>
+  `;
+}
+
+/* ── RENDER: KONTAKT ─────────────────────────────── */
+function renderKontakt() {
+  document.getElementById('kontaktContent').innerHTML = `
+    <div class="contact-hero">
+      <div class="contact-hero-ico"><i class="ti ti-headset"></i></div>
+      <div class="contact-hero-name">${esc(SERWISANT_NAME)}</div>
+      <div class="contact-hero-sub">Serwis i przeglądy kotłów grzewczych</div>
+    </div>
+
+    <div class="contact-btns">
+      <a href="tel:${esc(SERWISANT_PHONE)}" class="btn-contact call">
+        <i class="ti ti-phone"></i>
+        Zadzwoń: ${esc(SERWISANT_PHONE)}
+      </a>
+      <a href="mailto:${esc(SERWISANT_EMAIL)}" class="btn-contact email">
+        <i class="ti ti-mail"></i>
+        Napisz email
+      </a>
+    </div>
+
+    <div class="contact-info-card">
+      <div class="contact-info-row">
+        <div class="contact-info-ico orange"><i class="ti ti-phone"></i></div>
+        <div>
+          <div class="contact-info-lbl">Telefon</div>
+          <div class="contact-info-val">${esc(SERWISANT_PHONE)}</div>
+        </div>
+      </div>
+      <div class="contact-info-row">
+        <div class="contact-info-ico blue"><i class="ti ti-mail"></i></div>
+        <div>
+          <div class="contact-info-lbl">Email</div>
+          <div class="contact-info-val">${esc(SERWISANT_EMAIL)}</div>
+        </div>
+      </div>
+      <div class="contact-info-row">
+        <div class="contact-info-ico green"><i class="ti ti-clock"></i></div>
+        <div>
+          <div class="contact-info-lbl">Godziny pracy</div>
+          <div class="contact-info-val">${esc(SERWISANT_HOURS)}</div>
+        </div>
+      </div>
+    </div>
+
+    <div style="text-align:center;padding:20px 0;font-size:11px;color:var(--text3)">
+      ${footerVersion} · portal.serwiscieplo.pl
+    </div>
+  `;
+}
+
+/* ── NAWIGACJA ──────────────────────────────────── */
+function switchView(view) {
+  curView = view;
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.querySelectorAll('.bn-item').forEach(b => b.classList.remove('active'));
+  document.getElementById('view' + view.charAt(0).toUpperCase() + view.slice(1)).classList.add('active');
+  document.getElementById('bn-' + view).classList.add('active');
+  if (!dataLoaded) return;
+  if (view === 'dashboard') renderDashboard();
+  else if (view === 'serwisy') renderSerwisy();
+  else if (view === 'dane') renderDane();
+  else if (view === 'kontakt') renderKontakt();
+  document.getElementById('content').scrollTop = 0;
+}
+
+/* ── AUTH STATE ─────────────────────────────────── */
+function showAuth() {
+  document.getElementById('authWrap').style.display = '';
+  document.getElementById('pendingWrap').style.display = 'none';
+  document.getElementById('app').classList.remove('visible');
+  showForm('formLogin');
+}
+
+function showPending(email) {
+  document.getElementById('authWrap').style.display = 'none';
+  document.getElementById('pendingWrap').style.display = '';
+  document.getElementById('app').classList.remove('visible');
+  document.getElementById('pendingEmail').textContent = email;
+}
+
+function showApp(user) {
+  document.getElementById('authWrap').style.display = 'none';
+  document.getElementById('pendingWrap').style.display = 'none';
+  document.getElementById('app').classList.add('visible');
+
+  const nameStr = curClient.imie_nazwisko || user.email;
+  const initials = nameStr.split(' ').map(w => w[0]).join('').toUpperCase().slice(0,2);
+  document.getElementById('userAv').textContent = initials;
+  document.getElementById('userName').textContent = nameStr.split(' ')[0];
+}
+
+sb.auth.onAuthStateChange(async (event, session) => {
+  if (session?.user) {
+    curUser = session.user;
+    const result = await loadData(curUser);
+    if (!result) {
+      showPending(curUser.email);
+      return;
+    }
+    curClient   = result.client;
+    curServices = result.services;
+    dataLoaded  = true;
+    showApp(curUser);
+    renderDashboard();
+    renderKontakt();
+    checkIosBanner();
+  } else {
+    curUser = null; curClient = null; curServices = []; dataLoaded = false;
+    showAuth();
+  }
+});
+
+/* ── KEYBOARD SUBMIT ────────────────────────────── */
+document.querySelectorAll('.fg input').forEach(inp => {
+  inp.addEventListener('keydown', e => {
+    if (e.key !== 'Enter') return;
+    const form = inp.closest('[id^=form]');
+    if (!form) return;
+    if (form.id === 'formLogin')    doLogin();
+    else if (form.id === 'formRegister') doRegister();
+    else if (form.id === 'formReset')    doReset();
+  });
+});
+
+/* ── PWA / IOS INSTALL ──────────────────────────── */
+function checkIosBanner() {
+  const isIos = /iphone|ipad|ipod/i.test(navigator.userAgent);
+  const isStandalone = window.matchMedia('(display-mode: standalone)').matches || navigator.standalone;
+  if (isIos && !isStandalone && !sessionStorage.getItem('iosBannerDismissed')) {
+    document.getElementById('iosBanner').classList.add('show');
+  }
+}
+
+function dismissIosBanner() {
+  document.getElementById('iosBanner').classList.remove('show');
+  sessionStorage.setItem('iosBannerDismissed', '1');
+}
+
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/sw.js').catch(() => {});
+}
+
+/* ── INIT ───────────────────────────────────────── */
+initTheme();
+</script>
+</body>
+</html>
