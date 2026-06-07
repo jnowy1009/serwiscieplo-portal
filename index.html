@@ -3,11 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>Mój Kocioł — SerwisCiepło</title>
+<title>Portal Klienta — SerwisCiepło</title>
 <meta name="theme-color" content="#1c1917">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Mój Kocioł">
+<meta name="apple-mobile-web-app-title" content="Portal SC">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-192.png">
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
@@ -41,171 +41,235 @@
 }
 html,body{height:100%;font-family:-apple-system,'Segoe UI',Helvetica,sans-serif;background:var(--bg);color:var(--text);font-size:15px;transition:background .25s,color .25s}
 
-/* ── AUTH ─────────────────────────────────────────────── */
-.auth-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;background:radial-gradient(ellipse at 20% 50%,#1a0a00 0%,#0d0d0d 50%,#050510 100%);position:relative;overflow:hidden}
-.auth-wrap::before,.auth-wrap::after{content:'';position:absolute;border-radius:50%;pointer-events:none}
-.auth-wrap::before{width:500px;height:500px;left:-120px;top:-100px;background:radial-gradient(circle,rgba(194,65,12,.18) 0%,transparent 70%);animation:orb1 8s ease-in-out infinite}
-.auth-wrap::after{width:400px;height:400px;right:-100px;bottom:-80px;background:radial-gradient(circle,rgba(234,88,12,.12) 0%,transparent 70%);animation:orb2 10s ease-in-out infinite}
+/* ── AUTH / ACTIVATE ──────────────────────────────────── */
+.auth-bg{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;background:radial-gradient(ellipse at 20% 50%,#1a0a00 0%,#0d0d0d 50%,#050510 100%);position:relative;overflow:hidden}
+.auth-bg::before{content:'';position:absolute;width:500px;height:500px;left:-120px;top:-100px;border-radius:50%;background:radial-gradient(circle,rgba(194,65,12,.18) 0%,transparent 70%);animation:orb1 8s ease-in-out infinite;pointer-events:none}
+.auth-bg::after{content:'';position:absolute;width:400px;height:400px;right:-100px;bottom:-80px;border-radius:50%;background:radial-gradient(circle,rgba(234,88,12,.12) 0%,transparent 70%);animation:orb2 10s ease-in-out infinite;pointer-events:none}
 @keyframes orb1{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(30px,20px) scale(1.08)}}
 @keyframes orb2{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(-20px,-30px) scale(1.06)}}
-
 .auth-card{background:rgba(255,255,255,.04);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border:1px solid rgba(255,255,255,.08);border-radius:24px;padding:36px 32px;width:100%;max-width:400px;box-shadow:0 32px 80px rgba(0,0,0,.7),inset 0 1px 0 rgba(255,255,255,.06);animation:cardIn .45s cubic-bezier(.22,1,.36,1);position:relative;z-index:1}
 @keyframes cardIn{from{opacity:0;transform:translateY(28px) scale(.97)}to{opacity:1;transform:translateY(0) scale(1)}}
-
-.auth-logo{display:flex;align-items:center;gap:10px;margin-bottom:28px;justify-content:center}
+.auth-logo{display:flex;align-items:center;gap:10px;margin-bottom:24px;justify-content:center}
 .auth-logo-flame{width:44px;height:44px;background:linear-gradient(135deg,var(--accent2),#f97316);border-radius:13px;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 20px rgba(234,88,12,.5);animation:flamePulse 2.5s ease-in-out infinite}
 .auth-logo-flame i{font-size:22px;color:#fff}
 @keyframes flamePulse{0%,100%{box-shadow:0 4px 20px rgba(234,88,12,.5)}50%{box-shadow:0 4px 32px rgba(234,88,12,.85)}}
-.auth-logo span{font-size:22px;font-weight:800;letter-spacing:-.5px;color:#fff}
-.auth-logo-sub{font-size:11px;color:rgba(255,255,255,.4);font-weight:500;margin-top:-2px;letter-spacing:.02em}
-
-.auth-title{font-size:18px;font-weight:800;text-align:center;color:#fff}
-.auth-sub{font-size:13px;color:rgba(255,255,255,.45);text-align:center;margin:4px 0 22px}
+.auth-logo-text{font-size:21px;font-weight:800;letter-spacing:-.5px;color:#fff}
+.auth-logo-sub{font-size:10px;color:rgba(255,255,255,.38);font-weight:500;margin-top:1px;text-transform:uppercase;letter-spacing:.06em}
+.auth-title{font-size:18px;font-weight:800;text-align:center;color:#fff;margin-bottom:4px}
+.auth-sub{font-size:13px;color:rgba(255,255,255,.45);text-align:center;margin-bottom:22px;line-height:1.5}
 .fg{margin-bottom:13px}
 .fg label{font-size:11px;font-weight:700;color:rgba(255,255,255,.45);display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:.05em}
-.fg input{width:100%;padding:12px 14px;border:1.5px solid rgba(255,255,255,.1);border-radius:var(--rs);font-size:14px;color:#fff;outline:none;background:rgba(255,255,255,.06);transition:border-color .2s,background .2s;font-family:inherit}
-.fg input::placeholder{color:rgba(255,255,255,.25)}
-.fg input:focus{border-color:var(--accent2);background:rgba(255,255,255,.1)}
-
+.fg input,.fg textarea{width:100%;padding:12px 14px;border:1.5px solid rgba(255,255,255,.1);border-radius:var(--rs);font-size:14px;color:#fff;outline:none;background:rgba(255,255,255,.06);transition:border-color .2s;font-family:inherit}
+.fg input::placeholder,.fg textarea::placeholder{color:rgba(255,255,255,.25)}
+.fg input:focus,.fg textarea:focus{border-color:var(--accent2);background:rgba(255,255,255,.1)}
 .btn-auth{width:100%;padding:13px;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;border:none;border-radius:var(--rs);font-size:15px;font-weight:700;cursor:pointer;margin-top:10px;transition:opacity .15s,transform .1s;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:8px;position:relative;overflow:hidden}
-.btn-auth::before{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.15),transparent);transform:translateX(-100%);transition:transform .4s}
-.btn-auth:hover::before{transform:translateX(100%)}
 .btn-auth:hover{opacity:.92;transform:translateY(-1px)}
 .btn-auth:active{transform:translateY(0)}
-.btn-auth.loading{opacity:.75;pointer-events:none}
+.btn-auth.loading{opacity:.7;pointer-events:none}
 .btn-auth-spin{width:16px;height:16px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .6s linear infinite;display:none}
 .btn-auth.loading .btn-auth-spin{display:block}
 @keyframes spin{to{transform:rotate(360deg)}}
-
-.auth-switch{text-align:center;margin-top:16px;font-size:13px;color:rgba(255,255,255,.4)}
-.auth-switch a{color:var(--accent2);cursor:pointer;font-weight:600;transition:color .15s}
+.auth-switch{text-align:center;margin-top:14px;font-size:13px;color:rgba(255,255,255,.4)}
+.auth-switch a{color:var(--accent2);cursor:pointer;font-weight:600}
 .auth-switch a:hover{color:#fb923c}
 .auth-err{background:rgba(185,28,28,.25);color:#fca5a5;border:1px solid rgba(185,28,28,.4);font-size:13px;padding:10px 12px;border-radius:var(--rs);margin-bottom:14px;display:none}
-.auth-err.visible{display:block}
-.auth-info{background:rgba(21,128,61,.25);color:#86efac;border:1px solid rgba(21,128,61,.4);font-size:13px;padding:10px 12px;border-radius:var(--rs);margin-bottom:14px;display:none}
-.auth-info.visible{display:block}
+.auth-err.show{display:block}
+.auth-ok{background:rgba(21,128,61,.25);color:#86efac;border:1px solid rgba(21,128,61,.4);font-size:13px;padding:10px 12px;border-radius:var(--rs);margin-bottom:14px;display:none}
+.auth-ok.show{display:block}
+.pass-strength{display:flex;gap:3px;margin-top:5px}
+.ps-bar{height:3px;flex:1;border-radius:2px;background:rgba(255,255,255,.1);transition:background .25s}
+.ps-bar.weak{background:#b91c1c}
+.ps-bar.ok{background:#b45309}
+.ps-bar.strong{background:#15803d}
 
 /* ── APP SHELL ────────────────────────────────────────── */
 .app{display:none;flex-direction:column;height:100%;height:100dvh}
-.app.visible{display:flex}
-
+.app.on{display:flex}
 .topbar{background:var(--text);padding:11px 16px;display:flex;align-items:center;gap:12px;flex-shrink:0;z-index:100}
 [data-theme="dark"] .topbar{background:#0a0a0a;border-bottom:1px solid var(--border)}
-.top-logo{font-size:16px;font-weight:800;color:#fff;display:flex;align-items:center;gap:7px}
-.top-logo i{color:var(--accent2);font-size:20px}
-.top-logo-sub{font-size:10px;color:rgba(255,255,255,.38);font-weight:500;margin-left:2px;margin-top:1px}
+.top-logo{font-size:15px;font-weight:800;color:#fff;display:flex;align-items:center;gap:7px;text-decoration:none;cursor:pointer}
+.top-logo i{color:var(--accent2);font-size:19px}
+.top-logo-sub{font-size:9px;color:rgba(255,255,255,.35);font-weight:500;text-transform:uppercase;letter-spacing:.05em;margin-top:1px}
+.top-back{background:none;border:none;color:rgba(255,255,255,.65);font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:5px;padding:4px 8px;border-radius:var(--rs);transition:all .15s;font-family:inherit}
+.top-back:hover{color:#fff;background:rgba(255,255,255,.1)}
+.top-back i{font-size:18px}
 .top-actions{display:flex;gap:5px;align-items:center;margin-left:auto}
 .top-btn{background:none;border:none;color:rgba(255,255,255,.6);font-size:20px;cursor:pointer;padding:5px 6px;border-radius:var(--rs);transition:all .15s;line-height:1}
 .top-btn:hover{color:#fff;background:rgba(255,255,255,.1)}
 .user-pill{display:flex;align-items:center;gap:7px;background:rgba(255,255,255,.1);border-radius:20px;padding:5px 10px 5px 5px;cursor:pointer;transition:background .15s}
 .user-pill:hover{background:rgba(255,255,255,.18)}
 .u-av{width:26px;height:26px;border-radius:50%;background:var(--accent2);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;flex-shrink:0}
-.u-name{font-size:12px;color:rgba(255,255,255,.78);max-width:90px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.u-name{font-size:12px;color:rgba(255,255,255,.78);max-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 
-.content{flex:1;overflow-y:auto;padding:20px 16px 84px;scroll-behavior:smooth}
-@media(min-width:600px){.content{padding:24px 24px 84px;max-width:720px;margin:0 auto;width:100%}}
+/* ROUTER VIEW */
+.rv{flex:1;overflow-y:auto;padding:20px 16px 84px;scroll-behavior:smooth}
+@media(min-width:600px){.rv{padding:24px 24px 84px;max-width:720px;margin:0 auto;width:100%}}
+.rv-anim{animation:fadeUp .2s ease}
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
 
-/* ── BOTTOM NAV ───────────────────────────────────────── */
-.bottom-nav{background:var(--surface);border-top:1px solid var(--border);display:flex;flex-shrink:0;height:64px;padding-bottom:env(safe-area-inset-bottom,0px);box-shadow:0 -2px 16px rgba(0,0,0,.07);z-index:100}
-[data-theme="dark"] .bottom-nav{border-top:1px solid var(--border);box-shadow:0 -2px 16px rgba(0,0,0,.3)}
-.bn-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;background:none;border:none;cursor:pointer;color:var(--text3);font-size:10px;font-weight:600;padding:8px 4px;transition:color .15s;font-family:inherit;-webkit-tap-highlight-color:transparent}
-.bn-item i{font-size:22px;transition:transform .15s}
-.bn-item.active{color:var(--accent)}
-.bn-item.active i{transform:translateY(-1px)}
-.bn-item:active i{transform:scale(.9)}
+/* BOTTOM NAV */
+.bnav{background:var(--surface);border-top:1px solid var(--border);display:flex;flex-shrink:0;height:62px;padding-bottom:env(safe-area-inset-bottom,0px);box-shadow:0 -2px 16px rgba(0,0,0,.06);z-index:100}
+[data-theme="dark"] .bnav{box-shadow:0 -2px 16px rgba(0,0,0,.3)}
+.bn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;background:none;border:none;cursor:pointer;color:var(--text3);font-size:10px;font-weight:600;padding:6px 4px;transition:color .15s;font-family:inherit;position:relative}
+.bn i{font-size:22px;transition:transform .15s}
+.bn.on{color:var(--accent)}
+.bn.on i{transform:translateY(-1px)}
+.bn-badge{position:absolute;top:5px;right:calc(50% - 14px);background:var(--red);color:#fff;font-size:9px;font-weight:800;min-width:16px;height:16px;border-radius:8px;display:flex;align-items:center;justify-content:center;padding:0 3px;display:none}
+.bn-badge.show{display:flex}
 
-/* ── VIEWS ────────────────────────────────────────────── */
-.view{display:none;animation:fadeIn .2s ease}
-.view.active{display:block}
-@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+/* ── CARDS / WIDGETS ──────────────────────────────────── */
+.card{background:var(--surface);border-radius:var(--r);border:1px solid var(--border);box-shadow:var(--shadow);padding:18px;margin-bottom:14px}
+.card-hdr{font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:14px;display:flex;align-items:center;gap:6px}
+.card-hdr i{font-size:14px}
 
-/* ── SECTION HEADER ───────────────────────────────────── */
+/* SEC HEADER */
 .sec-hdr{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:20px;gap:12px}
 .sec-title{font-size:20px;font-weight:800;letter-spacing:-.4px}
 .sec-sub{font-size:13px;color:var(--text2);margin-top:2px}
 
-/* ── CARD ─────────────────────────────────────────────── */
-.card{background:var(--surface);border-radius:var(--r);border:1px solid var(--border);box-shadow:var(--shadow);padding:18px;margin-bottom:14px}
-.card-title{font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:14px;display:flex;align-items:center;gap:6px}
-.card-title i{font-size:14px}
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;gap:7px;padding:10px 16px;border-radius:var(--rs);font-size:13px;font-weight:700;cursor:pointer;border:none;transition:all .15s;white-space:nowrap;font-family:inherit;text-decoration:none}
+.btn-primary{background:var(--accent);color:#fff}
+.btn-primary:hover{background:var(--accent2)}
+.btn-outline{background:var(--surface);color:var(--text2);border:1px solid var(--border2)}
+.btn-outline:hover{background:var(--surface2);color:var(--text)}
+.btn-sm{padding:7px 12px;font-size:12px}
+.btn-danger{background:var(--red-light);color:var(--red);border:1px solid var(--red-border)}
+.btn-full{width:100%;justify-content:center}
 
-/* ── BOILER HERO ──────────────────────────────────────── */
+/* TAGS */
+.tag{font-size:11px;padding:3px 8px;border-radius:6px;font-weight:700;display:inline-flex;align-items:center;gap:3px}
+.tag-ok{background:var(--green-light);color:var(--green)}
+.tag-warn{background:var(--amber-light);color:var(--amber)}
+.tag-due{background:var(--red-light);color:var(--red)}
+.tag-blue{background:var(--blue-light);color:var(--blue)}
+.tag-muted{background:var(--surface3);color:var(--text3)}
+
+/* CLIENT CARD */
+.klient-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:16px;margin-bottom:12px;cursor:pointer;box-shadow:var(--shadow);transition:all .15s;position:relative;overflow:hidden}
+.klient-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
+.klient-card.ok::before{background:var(--green)}
+.klient-card.warn::before{background:var(--amber)}
+.klient-card.due::before{background:var(--red)}
+.klient-card:hover{transform:translateY(-2px);box-shadow:var(--shadow-md)}
+.klient-card:active{transform:scale(.99)}
+.kc-top{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:10px}
+.kc-av{width:42px;height:42px;border-radius:50%;background:var(--accent-light);border:2px solid var(--accent-border);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:var(--accent);flex-shrink:0}
+.kc-name{font-size:15px;font-weight:700;line-height:1.2;word-break:break-word}
+.kc-addr{font-size:12px;color:var(--text2);margin-top:2px}
+.kc-boiler{font-size:11px;color:var(--text3);margin-top:3px}
+.kc-footer{display:flex;align-items:center;justify-content:space-between;margin-top:10px;padding-top:10px;border-top:1px solid var(--border);gap:8px;flex-wrap:wrap}
+.kc-btns{display:flex;gap:8px}
+
+/* BOILER HERO */
 .boiler-hero{background:linear-gradient(135deg,#9a3412 0%,#c2410c 40%,#ea580c 75%,#f97316 100%);border-radius:16px;padding:22px 20px;color:#fff;margin-bottom:14px;position:relative;overflow:hidden;box-shadow:0 6px 24px rgba(194,65,12,.35)}
 .boiler-hero::before{content:'';position:absolute;right:-30px;top:-30px;width:140px;height:140px;background:rgba(255,255,255,.07);border-radius:50%}
-.boiler-hero::after{content:'';position:absolute;right:24px;bottom:-40px;width:90px;height:90px;background:rgba(255,255,255,.05);border-radius:50%}
-.boiler-hero-ico{font-size:38px;margin-bottom:10px;opacity:.9;position:relative;z-index:1}
-.boiler-model{font-size:18px;font-weight:800;letter-spacing:-.3px;position:relative;z-index:1;line-height:1.2}
-.boiler-serial{font-size:12px;opacity:.72;margin-top:3px;position:relative;z-index:1;font-weight:500}
-.boiler-none{font-size:14px;opacity:.75;position:relative;z-index:1;font-style:italic}
-.boiler-hero-row{display:flex;align-items:center;justify-content:space-between;position:relative;z-index:1;margin-top:12px;padding-top:12px;border-top:1px solid rgba(255,255,255,.15)}
-.boiler-hero-stat{text-align:center}
-.boiler-hero-stat-val{font-size:13px;font-weight:700}
-.boiler-hero-stat-lbl{font-size:10px;opacity:.65;font-weight:500;margin-top:1px;text-transform:uppercase;letter-spacing:.04em}
+.bh-ico{font-size:38px;margin-bottom:10px;position:relative;z-index:1}
+.bh-model{font-size:18px;font-weight:800;letter-spacing:-.3px;position:relative;z-index:1;line-height:1.2}
+.bh-serial{font-size:12px;opacity:.72;margin-top:3px;position:relative;z-index:1;font-weight:500}
+.bh-row{display:flex;align-items:center;justify-content:space-between;position:relative;z-index:1;margin-top:14px;padding-top:12px;border-top:1px solid rgba(255,255,255,.15)}
+.bh-stat-val{font-size:13px;font-weight:700}
+.bh-stat-lbl{font-size:10px;opacity:.65;font-weight:500;margin-top:1px;text-transform:uppercase;letter-spacing:.04em}
 
-/* ── COUNTDOWN CARD ───────────────────────────────────── */
-.countdown-card{border-radius:var(--r);border:1px solid var(--border);padding:18px;margin-bottom:14px;background:var(--surface);box-shadow:var(--shadow);position:relative;overflow:hidden}
-.countdown-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;border-radius:4px 0 0 4px}
-.countdown-card.ok::before{background:var(--green)}
-.countdown-card.warn::before{background:var(--amber)}
-.countdown-card.due::before{background:var(--red)}
-.countdown-card.none::before{background:var(--text3)}
-.countdown-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
-.countdown-lbl{font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.07em}
-.countdown-badge{font-size:11px;font-weight:700;padding:3px 9px;border-radius:6px}
-.countdown-badge.ok{background:var(--green-light);color:var(--green)}
-.countdown-badge.warn{background:var(--amber-light);color:var(--amber)}
-.countdown-badge.due{background:var(--red-light);color:var(--red)}
-.countdown-badge.none{background:var(--surface3);color:var(--text3)}
-.countdown-num{font-size:52px;font-weight:800;line-height:1;letter-spacing:-3px;margin-bottom:2px}
-.countdown-num.ok{color:var(--green)}
-.countdown-num.warn{color:var(--amber)}
-.countdown-num.due{color:var(--red)}
-.countdown-num.none{color:var(--text3)}
-.countdown-unit{font-size:13px;font-weight:600;color:var(--text2);margin-bottom:10px}
-.countdown-date{font-size:13px;color:var(--text2);display:flex;align-items:center;gap:6px;font-weight:500}
-.countdown-date i{font-size:15px;color:var(--text3)}
+/* COUNTDOWN */
+.cdown{border-radius:var(--r);border:1px solid var(--border);padding:18px;margin-bottom:14px;background:var(--surface);box-shadow:var(--shadow);position:relative;overflow:hidden}
+.cdown::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;border-radius:4px 0 0 4px}
+.cdown.ok::before{background:var(--green)}
+.cdown.warn::before{background:var(--amber)}
+.cdown.due::before{background:var(--red)}
+.cdown.none::before{background:var(--text3)}
+.cdown-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.cdown-lbl{font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.07em}
+.cdown-badge{font-size:11px;font-weight:700;padding:3px 9px;border-radius:6px}
+.cdown-badge.ok{background:var(--green-light);color:var(--green)}
+.cdown-badge.warn{background:var(--amber-light);color:var(--amber)}
+.cdown-badge.due{background:var(--red-light);color:var(--red)}
+.cdown-badge.none{background:var(--surface3);color:var(--text3)}
+.cdown-num{font-size:52px;font-weight:800;line-height:1;letter-spacing:-3px;margin-bottom:2px}
+.cdown-num.ok{color:var(--green)}
+.cdown-num.warn{color:var(--amber)}
+.cdown-num.due{color:var(--red)}
+.cdown-num.none{color:var(--text3)}
+.cdown-unit{font-size:13px;font-weight:600;color:var(--text2);margin-bottom:8px}
+.cdown-date{font-size:13px;color:var(--text2);display:flex;align-items:center;gap:6px}
+.cdown-date i{font-size:15px;color:var(--text3)}
 
-/* ── STATS ROW ────────────────────────────────────────── */
-.stats-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px}
-.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:14px;text-align:center;box-shadow:var(--shadow)}
-.stat-num{font-size:34px;font-weight:800;line-height:1;letter-spacing:-2px}
-.stat-lbl{font-size:10px;color:var(--text2);margin-top:5px;font-weight:600;text-transform:uppercase;letter-spacing:.04em}
+/* STATS */
+.stats2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px}
+.stat-c{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:14px;text-align:center;box-shadow:var(--shadow)}
+.stat-n{font-size:32px;font-weight:800;line-height:1;letter-spacing:-2px}
+.stat-l{font-size:10px;color:var(--text2);margin-top:5px;font-weight:600;text-transform:uppercase;letter-spacing:.04em}
 
-/* ── LAST SERVICE ─────────────────────────────────────── */
-.last-svc{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:14px 16px;box-shadow:var(--shadow)}
-.last-svc-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
-.last-svc-title{font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.07em}
-.last-svc-date{font-size:12px;color:var(--text2);font-weight:600}
-.last-svc-desc{font-size:13px;color:var(--text);line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-.last-svc-empty{font-size:13px;color:var(--text3);font-style:italic;padding:4px 0}
-
-/* ── SERVICE ITEMS ────────────────────────────────────── */
-.svc-item{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:14px 16px;margin-bottom:10px;box-shadow:var(--shadow);position:relative}
+/* SERVICE HISTORY */
+.svc-item{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:14px 16px;margin-bottom:10px;box-shadow:var(--shadow)}
 .svc-item.wip{border-left:3px solid var(--amber)}
-.svc-meta{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;gap:8px;flex-wrap:wrap}
-.svc-date{font-size:12px;color:var(--text3);font-weight:600;display:flex;align-items:center;gap:4px}
-.svc-date i{font-size:13px}
-.svc-badge{font-size:10.5px;font-weight:700;padding:3px 8px;border-radius:6px}
+.svc-meta{display:flex;align-items:center;justify-content:space-between;margin-bottom:7px;gap:8px;flex-wrap:wrap}
+.svc-date-row{font-size:12px;color:var(--text3);font-weight:600;display:flex;align-items:center;gap:4px}
+.svc-badge{font-size:10.5px;font-weight:700;padding:3px 8px;border-radius:6px;display:inline-flex;align-items:center;gap:3px}
 .svc-badge.done{background:var(--green-light);color:var(--green)}
 .svc-badge.wip{background:var(--amber-light);color:var(--amber)}
 .svc-desc{font-size:13px;line-height:1.55;color:var(--text)}
 
-/* ── DETAIL FIELDS ────────────────────────────────────── */
-.detail-section{margin-bottom:20px}
-.detail-section-title{font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:12px;display:flex;align-items:center;gap:6px;padding-bottom:8px;border-bottom:1px solid var(--border)}
-.detail-section-title i{font-size:15px}
+/* SERVICE REQUESTS */
+.req-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:14px 16px;margin-bottom:12px;box-shadow:var(--shadow);cursor:pointer;transition:all .15s}
+.req-card:hover{transform:translateY(-2px);box-shadow:var(--shadow-md)}
+.req-card.urgent{border-left:3px solid var(--red)}
+.req-top{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:8px}
+.req-date{font-size:11px;color:var(--text3);font-weight:600}
+.req-desc{font-size:13px;line-height:1.5;color:var(--text);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;margin-bottom:8px}
+.req-foot{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text2)}
+.req-foot i{font-size:14px;color:var(--text3)}
+
+/* STATUS BAR */
+.status-bar{display:flex;align-items:flex-start;margin:20px 0;position:relative}
+.status-bar::before{content:'';position:absolute;top:14px;left:14px;right:14px;height:2px;background:var(--border2);z-index:0}
+.status-step{flex:1;display:flex;flex-direction:column;align-items:center;position:relative;z-index:1}
+.ss-dot{width:28px;height:28px;border-radius:50%;border:2px solid var(--border2);background:var(--surface);display:flex;align-items:center;justify-content:center;font-size:12px;transition:all .25s;color:var(--text3)}
+.ss-lbl{font-size:10px;font-weight:600;color:var(--text3);margin-top:5px;text-align:center;max-width:60px;line-height:1.3}
+.status-step.done .ss-dot{background:var(--green);border-color:var(--green);color:#fff}
+.status-step.done .ss-lbl{color:var(--green)}
+.status-step.active .ss-dot{background:var(--accent);border-color:var(--accent);color:#fff;box-shadow:0 0 0 4px var(--accent-border)}
+.status-step.active .ss-lbl{color:var(--accent);font-weight:700}
+.status-bar-line{position:absolute;top:14px;left:0;height:2px;background:var(--green);z-index:0;transition:width .4s ease}
+
+/* REQUEST DETAIL */
+.req-det-section{margin-bottom:20px}
+.req-det-title{font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:12px;display:flex;align-items:center;gap:6px;padding-bottom:8px;border-bottom:1px solid var(--border)}
+.req-det-title i{font-size:15px}
+.scheduled-banner{background:var(--green-light);border:1px solid var(--green-border);border-radius:var(--rs);padding:14px 16px;margin-bottom:14px;display:flex;align-items:flex-start;gap:12px}
+.scheduled-banner i{font-size:22px;color:var(--green);flex-shrink:0;margin-top:1px}
+.sched-date{font-size:15px;font-weight:800;color:var(--green);margin-bottom:2px}
+.sched-sub{font-size:12px;color:var(--green);opacity:.8}
+.confirm-btns{display:flex;gap:10px;margin-top:12px;flex-wrap:wrap}
+.confirm-btns .btn{flex:1;min-width:120px;justify-content:center}
+
+/* DETAIL FIELDS */
 .fields-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px 20px}
 .field label{font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:3px}
 .field span{font-size:14px;font-weight:500;word-break:break-word}
 .field span.empty{color:var(--text3);font-style:italic;font-size:13px}
 .field-full{grid-column:1/-1}
 
-/* ── CONTACT VIEW ─────────────────────────────────────── */
-.contact-hero{background:linear-gradient(135deg,#1e3a5f 0%,#1d4ed8 100%);border-radius:16px;padding:22px 20px;color:#fff;margin-bottom:14px;text-align:center;position:relative;overflow:hidden;box-shadow:0 6px 24px rgba(29,78,216,.3)}
-.contact-hero::before{content:'';position:absolute;left:-30px;top:-30px;width:120px;height:120px;background:rgba(255,255,255,.06);border-radius:50%}
-.contact-hero-ico{font-size:44px;margin-bottom:12px}
-.contact-hero-name{font-size:18px;font-weight:800;margin-bottom:4px}
-.contact-hero-sub{font-size:12px;opacity:.7}
+/* FORM */
+.form-group{margin-bottom:16px}
+.form-group label{font-size:12px;font-weight:700;color:var(--text2);display:block;margin-bottom:6px;text-transform:uppercase;letter-spacing:.04em}
+.form-group textarea,.form-group input,.form-group select{width:100%;padding:12px 14px;border:1.5px solid var(--border2);border-radius:var(--rs);font-size:14px;background:var(--surface2);color:var(--text);outline:none;font-family:inherit;transition:border-color .2s}
+.form-group textarea{min-height:100px;resize:vertical;line-height:1.55}
+.form-group textarea:focus,.form-group input:focus,.form-group select:focus{border-color:var(--accent2)}
+.char-count{font-size:11px;color:var(--text3);text-align:right;margin-top:3px}
+.priority-toggle{display:flex;gap:10px;margin-bottom:4px}
+.prio-opt{flex:1;padding:12px;border:1.5px solid var(--border2);border-radius:var(--rs);background:var(--surface2);cursor:pointer;font-size:13px;font-weight:600;color:var(--text2);display:flex;align-items:center;gap:6px;transition:all .15s;font-family:inherit}
+.prio-opt.sel-normal{border-color:var(--green);background:var(--green-light);color:var(--green)}
+.prio-opt.sel-urgent{border-color:var(--red);background:var(--red-light);color:var(--red)}
+.form-hint{font-size:12px;color:var(--text3);margin-top:4px;line-height:1.5}
+
+/* PROFILE */
+.profile-hero{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:24px;margin-bottom:16px;text-align:center;box-shadow:var(--shadow)}
+.profile-av{width:64px;height:64px;border-radius:50%;background:var(--accent-light);border:3px solid var(--accent-border);display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:800;color:var(--accent);margin:0 auto 12px}
+.profile-name{font-size:18px;font-weight:800;letter-spacing:-.3px}
+.profile-email{font-size:13px;color:var(--text2);margin-top:3px}
+
+/* CONTACT */
 .contact-btns{display:flex;flex-direction:column;gap:10px;margin-bottom:14px}
 .btn-contact{display:flex;align-items:center;justify-content:center;gap:10px;padding:14px 20px;border-radius:var(--rs);font-size:15px;font-weight:700;cursor:pointer;border:none;font-family:inherit;transition:all .15s;text-decoration:none}
 .btn-contact.call{background:var(--green-light);color:var(--green);border:1px solid var(--green-border)}
@@ -213,158 +277,163 @@ html,body{height:100%;font-family:-apple-system,'Segoe UI',Helvetica,sans-serif;
 .btn-contact.email{background:var(--blue-light);color:var(--blue);border:1px solid var(--blue-border)}
 .btn-contact.email:hover{background:var(--blue-border)}
 .btn-contact i{font-size:20px}
-.contact-info-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:16px;box-shadow:var(--shadow)}
-.contact-info-row{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border)}
-.contact-info-row:last-child{border:none;padding-bottom:0}
-.contact-info-ico{width:36px;height:36px;border-radius:var(--rs);display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0}
-.contact-info-ico.orange{background:var(--accent-light);color:var(--accent)}
-.contact-info-ico.blue{background:var(--blue-light);color:var(--blue)}
-.contact-info-ico.green{background:var(--green-light);color:var(--green)}
-.contact-info-lbl{font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:2px}
-.contact-info-val{font-size:14px;font-weight:600;color:var(--text)}
+.contact-row{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border)}
+.contact-row:last-child{border:none;padding-bottom:0}
+.contact-ico{width:36px;height:36px;border-radius:var(--rs);display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0}
+.contact-ico.o{background:var(--accent-light);color:var(--accent)}
+.contact-ico.b{background:var(--blue-light);color:var(--blue)}
+.contact-ico.g{background:var(--green-light);color:var(--green)}
+.contact-lbl{font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:2px}
+.contact-val{font-size:14px;font-weight:600}
 
-/* ── BUTTONS ──────────────────────────────────────────── */
-.btn{display:inline-flex;align-items:center;gap:7px;padding:10px 16px;border-radius:var(--rs);font-size:13px;font-weight:700;cursor:pointer;border:none;transition:all .15s;white-space:nowrap;font-family:inherit}
-.btn-primary{background:var(--accent);color:#fff}
-.btn-primary:hover{background:var(--accent2)}
-.btn-outline{background:var(--surface);color:var(--text2);border:1px solid var(--border2)}
-.btn-outline:hover{background:var(--surface2);color:var(--text)}
-.btn-sm{padding:7px 12px;font-size:12px}
+/* EMPTY STATE */
+.empty{text-align:center;padding:36px 20px;color:var(--text3)}
+.empty i{font-size:46px;display:block;margin-bottom:12px;opacity:.5}
+.empty p{font-size:14px;line-height:1.6}
 
-/* ── PENDING SCREEN ───────────────────────────────────── */
-.pending-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;background:radial-gradient(ellipse at 20% 50%,#1a0a00 0%,#0d0d0d 50%,#050510 100%)}
-.pending-card{background:rgba(255,255,255,.04);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border:1px solid rgba(255,255,255,.08);border-radius:24px;padding:40px 32px;width:100%;max-width:420px;text-align:center;box-shadow:0 32px 80px rgba(0,0,0,.7);animation:cardIn .45s cubic-bezier(.22,1,.36,1)}
-.pending-ico{font-size:54px;color:var(--amber);display:block;margin-bottom:20px;animation:flamePulse 2.5s ease-in-out infinite}
-.pending-title{font-size:18px;font-weight:800;color:#fff;margin-bottom:8px}
-.pending-msg{font-size:14px;color:rgba(255,255,255,.5);line-height:1.65;margin-bottom:24px}
-.pending-email{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:var(--rs);padding:10px 14px;font-size:13px;color:rgba(255,255,255,.7);margin-bottom:20px;word-break:break-all}
-.pending-email strong{color:#fff;font-weight:700}
-.btn-pending-logout{width:100%;padding:12px;background:rgba(255,255,255,.08);color:rgba(255,255,255,.7);border:1px solid rgba(255,255,255,.12);border-radius:var(--rs);font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;transition:background .15s}
-.btn-pending-logout:hover{background:rgba(255,255,255,.14)}
+/* LOADER */
+.loader-wrap{display:flex;align-items:center;justify-content:center;min-height:180px}
+.loader{width:28px;height:28px;border:3px solid var(--border2);border-top-color:var(--accent2);border-radius:50%;animation:spin .7s linear infinite}
 
-/* ── TOAST ────────────────────────────────────────────── */
-.toast{position:fixed;bottom:78px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--text);color:#fff;padding:10px 18px;border-radius:20px;font-size:13px;font-weight:600;white-space:nowrap;z-index:9999;opacity:0;transition:all .25s;pointer-events:none;box-shadow:var(--shadow-md)}
+/* TOAST */
+.toast{position:fixed;bottom:76px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--text);color:#fff;padding:10px 18px;border-radius:20px;font-size:13px;font-weight:600;white-space:nowrap;z-index:9000;opacity:0;transition:all .25s;pointer-events:none;box-shadow:var(--shadow-md)}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 
-/* ── LOGOUT MODAL ─────────────────────────────────────── */
-.modal-ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:2000;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(4px)}
-.modal-ov.visible{display:flex;animation:fadeIn .2s ease}
-.modal-box{background:var(--surface);border-radius:20px;padding:28px 24px;width:100%;max-width:320px;text-align:center;box-shadow:0 24px 64px rgba(0,0,0,.4);animation:cardIn .3s cubic-bezier(.22,1,.36,1)}
+/* MODAL */
+.ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:2000;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(4px)}
+.ov.on{display:flex;animation:fadeIn .2s ease}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.modal{background:var(--surface);border-radius:20px;padding:28px 24px;width:100%;max-width:340px;text-align:center;box-shadow:0 24px 64px rgba(0,0,0,.4);animation:cardIn .3s cubic-bezier(.22,1,.36,1)}
 .modal-ico{width:56px;height:56px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;font-size:24px}
 .modal-ico.logout{background:var(--red-light);border:2px solid var(--red-border);color:var(--red)}
 .modal-title{font-size:17px;font-weight:800;margin-bottom:6px}
 .modal-sub{font-size:13px;color:var(--text2);margin-bottom:22px}
-.modal-actions{display:flex;gap:10px}
-.modal-actions .btn{flex:1;justify-content:center}
+.modal-acts{display:flex;gap:10px}
+.modal-acts .btn{flex:1;justify-content:center}
 
-/* ── EMPTY STATE ──────────────────────────────────────── */
-.empty-state{text-align:center;padding:40px 20px;color:var(--text3)}
-.empty-state i{font-size:48px;display:block;margin-bottom:14px;opacity:.5}
-.empty-state p{font-size:14px;line-height:1.6}
+/* PENDING */
+.pending-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;background:radial-gradient(ellipse at 20% 50%,#1a0a00 0%,#0d0d0d 50%,#050510 100%)}
+.pending-card{background:rgba(255,255,255,.04);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border:1px solid rgba(255,255,255,.08);border-radius:24px;padding:40px 32px;width:100%;max-width:420px;text-align:center;box-shadow:0 32px 80px rgba(0,0,0,.7);animation:cardIn .45s cubic-bezier(.22,1,.36,1)}
+.pending-ico{font-size:52px;color:var(--amber);display:block;margin-bottom:18px;animation:flamePulse 2.5s ease-in-out infinite}
+.pending-title{font-size:18px;font-weight:800;color:#fff;margin-bottom:8px}
+.pending-msg{font-size:13px;color:rgba(255,255,255,.5);line-height:1.65;margin-bottom:16px}
+.pending-email-box{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:var(--rs);padding:10px 14px;font-size:13px;color:rgba(255,255,255,.7);margin-bottom:18px;word-break:break-all}
+.pending-email-box strong{color:#fff}
+.btn-pending{width:100%;padding:12px;background:rgba(255,255,255,.08);color:rgba(255,255,255,.7);border:1px solid rgba(255,255,255,.12);border-radius:var(--rs);font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;transition:background .15s}
+.btn-pending:hover{background:rgba(255,255,255,.14)}
 
-/* ── LOADING ──────────────────────────────────────────── */
-.loader-wrap{display:flex;align-items:center;justify-content:center;min-height:200px}
-.loader{width:28px;height:28px;border:3px solid var(--border2);border-top-color:var(--accent2);border-radius:50%;animation:spin .7s linear infinite}
-
-/* ── IOS INSTALL BANNER ───────────────────────────────── */
-.ios-banner{display:none;position:fixed;bottom:0;left:0;right:0;background:var(--surface);border-top:2px solid var(--accent);padding:14px 16px calc(14px + env(safe-area-inset-bottom,0px));z-index:200;box-shadow:0 -4px 20px rgba(0,0,0,.15)}
-.ios-banner.show{display:block}
-.ios-banner-title{font-size:14px;font-weight:700;margin-bottom:5px;display:flex;align-items:center;gap:8px}
-.ios-banner-title i{color:var(--accent2)}
-.ios-banner-steps{font-size:12px;color:var(--text2);line-height:1.8}
-.ios-banner-steps strong{color:var(--text)}
-.ios-banner-close{position:absolute;top:10px;right:12px;background:none;border:none;font-size:20px;color:var(--text3);cursor:pointer;padding:4px}
+/* FOOTER VERSION */
+.ver{text-align:center;padding:16px 0;font-size:11px;color:var(--text3)}
 </style>
 </head>
 <body>
 
-<!-- ═══════════════════════════════════════════════════
-     AUTH SCREEN
-════════════════════════════════════════════════════════ -->
-<div id="authWrap" class="auth-wrap" style="display:none">
-  <div class="auth-card">
-    <div class="auth-logo">
-      <div class="auth-logo-flame"><i class="ti ti-flame"></i></div>
-      <div>
-        <div style="font-size:22px;font-weight:800;letter-spacing:-.5px;color:#fff">SerwisCiepło</div>
-        <div class="auth-logo-sub">Portal Klienta</div>
+<!-- ══════════════════════════════════════
+     ACTIVATE SCREEN (?token=XXX)
+══════════════════════════════════════════ -->
+<div id="sActivate" style="display:none">
+  <div class="auth-bg">
+    <div class="auth-card">
+      <div class="auth-logo">
+        <div class="auth-logo-flame"><i class="ti ti-flame"></i></div>
+        <div>
+          <div class="auth-logo-text">SerwisCiepło</div>
+          <div class="auth-logo-sub">Portal Klienta</div>
+        </div>
       </div>
-    </div>
-
-    <!-- LOGIN -->
-    <div id="formLogin">
-      <div class="auth-title">Zaloguj się</div>
-      <div class="auth-sub">Sprawdź stan swojego kotła</div>
-      <div class="auth-err" id="loginErr"></div>
-      <div class="fg"><label>Email</label><input type="email" id="lEmail" placeholder="twoj@email.pl" autocomplete="email" autocapitalize="none"></div>
-      <div class="fg"><label>Hasło</label><input type="password" id="lPass" placeholder="••••••••" autocomplete="current-password"></div>
-      <button class="btn-auth" id="btnLogin" onclick="doLogin()">
-        <div class="btn-auth-spin"></div>
-        <span>Zaloguj się</span>
-      </button>
-      <div class="auth-switch">
-        <a onclick="showForm('formReset')">Zapomniałem hasła</a>
-        &nbsp;·&nbsp;
-        <a onclick="showForm('formRegister')">Zarejestruj się</a>
+      <div class="auth-title">Aktywuj konto</div>
+      <div class="auth-sub">Ustaw hasło, aby uzyskać dostęp do swojego portalu</div>
+      <div class="auth-err" id="actErr"></div>
+      <div class="auth-ok" id="actOk"></div>
+      <div class="fg">
+        <label>Hasło</label>
+        <input type="password" id="actPass" placeholder="Min. 8 znaków" autocomplete="new-password">
+        <div class="pass-strength" id="passStrength">
+          <div class="ps-bar" id="ps1"></div>
+          <div class="ps-bar" id="ps2"></div>
+          <div class="ps-bar" id="ps3"></div>
+          <div class="ps-bar" id="ps4"></div>
+        </div>
       </div>
-    </div>
-
-    <!-- REGISTER -->
-    <div id="formRegister" style="display:none">
-      <div class="auth-title">Utwórz konto</div>
-      <div class="auth-sub">Zarejestruj się używając emaila podanego serwisantowi</div>
-      <div class="auth-err" id="regErr"></div>
-      <div class="auth-info" id="regInfo"></div>
-      <div class="fg"><label>Imię i nazwisko</label><input type="text" id="rName" placeholder="Jan Kowalski" autocomplete="name"></div>
-      <div class="fg"><label>Email</label><input type="email" id="rEmail" placeholder="twoj@email.pl" autocomplete="email" autocapitalize="none"></div>
-      <div class="fg"><label>Hasło (min. 8 znaków)</label><input type="password" id="rPass" placeholder="••••••••" autocomplete="new-password"></div>
-      <button class="btn-auth" id="btnReg" onclick="doRegister()">
+      <div class="fg">
+        <label>Powtórz hasło</label>
+        <input type="password" id="actPass2" placeholder="Powtórz hasło" autocomplete="new-password">
+      </div>
+      <button class="btn-auth" id="btnActivate" onclick="doActivate()">
         <div class="btn-auth-spin"></div>
-        <span>Utwórz konto</span>
+        <span>Aktywuj i zaloguj się</span>
       </button>
-      <div class="auth-switch"><a onclick="showForm('formLogin')">Mam już konto — zaloguj się</a></div>
-    </div>
-
-    <!-- RESET -->
-    <div id="formReset" style="display:none">
-      <div class="auth-title">Resetuj hasło</div>
-      <div class="auth-sub">Wyślemy Ci link do ustawienia nowego hasła</div>
-      <div class="auth-err" id="resetErr"></div>
-      <div class="auth-info" id="resetInfo"></div>
-      <div class="fg"><label>Email</label><input type="email" id="resetEmail" placeholder="twoj@email.pl" autocomplete="email" autocapitalize="none"></div>
-      <button class="btn-auth" id="btnReset" onclick="doReset()">
-        <div class="btn-auth-spin"></div>
-        <span>Wyślij link</span>
-      </button>
-      <div class="auth-switch"><a onclick="showForm('formLogin')">Powrót do logowania</a></div>
     </div>
   </div>
 </div>
 
-<!-- ═══════════════════════════════════════════════════
-     PENDING / NOT LINKED SCREEN
-════════════════════════════════════════════════════════ -->
-<div id="pendingWrap" class="pending-wrap" style="display:none">
-  <div class="pending-card">
-    <i class="ti ti-clock-hour-3 pending-ico"></i>
-    <div class="pending-title">Konto niepowiązane</div>
-    <div class="pending-msg">Twoje konto nie zostało jeszcze powiązane z żadną kartą klienta. Skontaktuj się ze swoim serwisantem i poproś o dodanie poniższego adresu email do Twojego profilu.</div>
-    <div class="pending-email">Zalogowany jako:<br><strong id="pendingEmail"></strong></div>
-    <div class="pending-msg" style="font-size:12px;margin-bottom:16px">Po powiązaniu konta przez serwisanta — odśwież tę stronę.</div>
-    <button class="btn-pending-logout" onclick="doLogout()">
-      <i class="ti ti-logout" style="margin-right:6px"></i>Wyloguj się
+<!-- ══════════════════════════════════════
+     LOGIN SCREEN
+══════════════════════════════════════════ -->
+<div id="sLogin" style="display:none">
+  <div class="auth-bg">
+    <div class="auth-card">
+      <div class="auth-logo">
+        <div class="auth-logo-flame"><i class="ti ti-flame"></i></div>
+        <div>
+          <div class="auth-logo-text">SerwisCiepło</div>
+          <div class="auth-logo-sub">Portal Klienta</div>
+        </div>
+      </div>
+
+      <div id="fLogin">
+        <div class="auth-title">Zaloguj się</div>
+        <div class="auth-sub">Dostęp wyłącznie dla klientów zaproszonych przez serwisanta</div>
+        <div class="auth-err" id="loginErr"></div>
+        <div class="fg"><label>Email</label><input type="email" id="lEmail" placeholder="twoj@email.pl" autocomplete="email" autocapitalize="none"></div>
+        <div class="fg"><label>Hasło</label><input type="password" id="lPass" placeholder="••••••••" autocomplete="current-password"></div>
+        <button class="btn-auth" id="btnLogin" onclick="doLogin()">
+          <div class="btn-auth-spin"></div><span>Zaloguj się</span>
+        </button>
+        <div class="auth-switch"><a onclick="showLoginForm('fReset')">Zapomniałem hasła</a></div>
+      </div>
+
+      <div id="fReset" style="display:none">
+        <div class="auth-title">Resetuj hasło</div>
+        <div class="auth-sub">Wyślemy Ci link do ustawienia nowego hasła</div>
+        <div class="auth-err" id="resetErr"></div>
+        <div class="auth-ok" id="resetOk"></div>
+        <div class="fg"><label>Email</label><input type="email" id="resetEmail" placeholder="twoj@email.pl" autocapitalize="none"></div>
+        <button class="btn-auth" id="btnReset" onclick="doReset()">
+          <div class="btn-auth-spin"></div><span>Wyślij link</span>
+        </button>
+        <div class="auth-switch"><a onclick="showLoginForm('fLogin')">Powrót do logowania</a></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     PENDING (konto niepowiązane)
+══════════════════════════════════════════ -->
+<div id="sPending" style="display:none">
+  <div class="pending-wrap">
+    <div class="pending-card">
+      <i class="ti ti-clock-hour-3 pending-ico"></i>
+      <div class="pending-title">Konto niepowiązane</div>
+      <div class="pending-msg">Twoje konto nie jest jeszcze powiązane z kartą klienta. Skontaktuj się ze swoim serwisantem i poproś o przypisanie poniższego adresu email.</div>
+      <div class="pending-email-box">Zalogowano jako:<br><strong id="pendingEmail"></strong></div>
+      <div class="pending-msg" style="font-size:12px;margin-bottom:18px">Po powiązaniu przez serwisanta odśwież stronę.</div>
+      <button class="btn-pending" onclick="doLogout()"><i class="ti ti-logout" style="margin-right:6px"></i>Wyloguj się</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     APP SHELL
+══════════════════════════════════════════ -->
+<div id="sApp" class="app">
+
+  <header class="topbar" id="topbar">
+    <button class="top-back" id="backBtn" onclick="goBack()" style="display:none">
+      <i class="ti ti-arrow-left"></i> Wstecz
     </button>
-  </div>
-</div>
-
-<!-- ═══════════════════════════════════════════════════
-     PORTAL APP
-════════════════════════════════════════════════════════ -->
-<div id="app" class="app">
-
-  <!-- TOPBAR -->
-  <header class="topbar">
-    <div class="top-logo">
+    <div class="top-logo" id="topLogo" onclick="navigateTo('/dashboard')">
       <i class="ti ti-flame"></i>
       <div>
         <div>SerwisCiepło</div>
@@ -372,601 +441,820 @@ html,body{height:100%;font-family:-apple-system,'Segoe UI',Helvetica,sans-serif;
       </div>
     </div>
     <div class="top-actions">
-      <button class="top-btn" id="themeBtn" onclick="toggleTheme()" title="Zmień motyw"></button>
-      <div class="user-pill" onclick="openLogoutModal()">
+      <button class="top-btn" id="themeBtn" onclick="toggleTheme()"></button>
+      <div class="user-pill" onclick="openModal('logoutOv')">
         <div class="u-av" id="userAv">?</div>
         <span class="u-name" id="userName"></span>
       </div>
     </div>
   </header>
 
-  <!-- CONTENT -->
-  <div class="content" id="content">
+  <div class="rv" id="rv"></div>
 
-    <!-- VIEW: PULPIT -->
-    <div class="view active" id="viewDashboard">
-      <div id="dashContent">
-        <div class="loader-wrap"><div class="loader"></div></div>
-      </div>
-    </div>
-
-    <!-- VIEW: SERWISY -->
-    <div class="view" id="viewSerwisy">
-      <div class="sec-hdr">
-        <div>
-          <div class="sec-title">Historia serwisów</div>
-          <div class="sec-sub" id="svcsSubtitle">Ładowanie…</div>
-        </div>
-      </div>
-      <div id="svcsContent">
-        <div class="loader-wrap"><div class="loader"></div></div>
-      </div>
-    </div>
-
-    <!-- VIEW: MOJE DANE -->
-    <div class="view" id="viewDane">
-      <div class="sec-hdr">
-        <div>
-          <div class="sec-title">Moje dane</div>
-          <div class="sec-sub">Twój profil i dane kotła</div>
-        </div>
-      </div>
-      <div id="daneContent">
-        <div class="loader-wrap"><div class="loader"></div></div>
-      </div>
-    </div>
-
-    <!-- VIEW: KONTAKT -->
-    <div class="view" id="viewKontakt">
-      <div class="sec-hdr">
-        <div>
-          <div class="sec-title">Kontakt</div>
-          <div class="sec-sub">Skontaktuj się z serwisantem</div>
-        </div>
-      </div>
-      <div id="kontaktContent"></div>
-    </div>
-
-  </div><!-- /content -->
-
-  <!-- BOTTOM NAV -->
-  <nav class="bottom-nav">
-    <button class="bn-item active" id="bn-dashboard" onclick="switchView('dashboard')">
+  <nav class="bnav">
+    <button class="bn on" id="bn-dashboard" onclick="navigateTo('/dashboard')">
       <i class="ti ti-home-2"></i><span>Pulpit</span>
     </button>
-    <button class="bn-item" id="bn-serwisy" onclick="switchView('serwisy')">
-      <i class="ti ti-list-details"></i><span>Serwisy</span>
+    <button class="bn" id="bn-requests" onclick="navigateTo('/requests')">
+      <i class="ti ti-clipboard-list"></i><span>Zgłoszenia</span>
+      <div class="bn-badge" id="reqBadge"></div>
     </button>
-    <button class="bn-item" id="bn-dane" onclick="switchView('dane')">
-      <i class="ti ti-user-circle"></i><span>Moje dane</span>
-    </button>
-    <button class="bn-item" id="bn-kontakt" onclick="switchView('kontakt')">
-      <i class="ti ti-phone"></i><span>Kontakt</span>
+    <button class="bn" id="bn-profile" onclick="navigateTo('/profile')">
+      <i class="ti ti-user-circle"></i><span>Profil</span>
     </button>
   </nav>
 
-</div><!-- /app -->
+</div>
 
 <!-- LOGOUT MODAL -->
-<div class="modal-ov" id="logoutModal">
-  <div class="modal-box">
+<div class="ov" id="logoutOv">
+  <div class="modal">
     <div class="modal-ico logout"><i class="ti ti-logout"></i></div>
     <div class="modal-title">Wylogować się?</div>
     <div class="modal-sub">Zostaniesz przekierowany do ekranu logowania.</div>
-    <div class="modal-actions">
-      <button class="btn btn-outline" onclick="closeModal('logoutModal')">Anuluj</button>
-      <button class="btn btn-primary" style="background:var(--red);border-color:var(--red)" onclick="doLogout()">Wyloguj</button>
+    <div class="modal-acts">
+      <button class="btn btn-outline" onclick="closeModal('logoutOv')">Anuluj</button>
+      <button class="btn btn-primary" style="background:var(--red)" onclick="doLogout()">Wyloguj</button>
     </div>
   </div>
 </div>
 
-<!-- iOS INSTALL BANNER -->
-<div class="ios-banner" id="iosBanner">
-  <button class="ios-banner-close" onclick="dismissIosBanner()"><i class="ti ti-x"></i></button>
-  <div class="ios-banner-title"><i class="ti ti-download"></i> Dodaj do ekranu głównego</div>
-  <div class="ios-banner-steps">
-    Naciśnij <strong><i class="ti ti-share" style="font-size:13px"></i> Udostępnij</strong> →
-    <strong>Dodaj do ekranu głównego</strong>
-  </div>
-</div>
-
-<!-- TOAST -->
 <div class="toast" id="toast"></div>
 
 <script>
 'use strict';
 
-/* ── KONFIGURACJA ──────────────────────────────────── */
-const SB_URL   = 'https://dzekzfxhqxiifuaesjum.supabase.co';
-const SB_KEY   = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR6ZWt6ZnhocXhpaWZ1YWVzanVtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg2MDY3ODEsImV4cCI6MjA5NDE4Mjc4MX0.SUFa62jSD0pThTtyN1n7eUKWRtPD42v4JP5vRNPf9fA';
-const sb       = supabase.createClient(SB_URL, SB_KEY);
-const footerVersion = 'v1.0.0';
+/* ── CONFIG ──────────────────────────────────────────── */
+const SB_URL = 'https://dzekzfxhqxiifuaesjum.supabase.co';
+const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR6ZWt6ZnhocXhpaWZ1YWVzanVtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg2MDY3ODEsImV4cCI6MjA5NDE4Mjc4MX0.SUFa62jSD0pThTtyN1n7eUKWRtPD42v4JP5vRNPf9fA';
+const sb = supabase.createClient(SB_URL, SB_KEY);
+const V = 'v2.0.0';
 
-/* ── DANE KONTAKTOWE SERWISANTA ─────────────────────
-   Dostosuj te wartości do swoich danych kontaktowych  */
-const SERWISANT_NAME    = 'SerwisCiepło';
-const SERWISANT_PHONE   = '+48 600 000 000';
-const SERWISANT_EMAIL   = 'serwis@serwiscieplo.pl';
-const SERWISANT_HOURS   = 'Pn – Pt, 7:00–17:00';
+/* Dane kontaktowe serwisanta — dostosuj do swoich */
+const SERWISANT_NAME  = 'SerwisCiepło';
+const SERWISANT_PHONE = '+48 600 000 000';
+const SERWISANT_EMAIL = 'serwis@serwiscieplo.pl';
+const SERWISANT_HOURS = 'Pn – Pt, 7:00–17:00';
 
-/* ── STAN APLIKACJI ─────────────────────────────── */
+/* ── STATE ───────────────────────────────────────────── */
 let curUser     = null;
-let curClient   = null;
-let curServices = [];
-let curView     = 'dashboard';
-let dataLoaded  = false;
+let curClients  = [];
+let allRequests = [];
+let rtChannel   = null;
+let activationToken = null;
 
-/* ── HELPERS ────────────────────────────────────── */
+/* ── HELPERS ─────────────────────────────────────────── */
 const esc = s => String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+const $ = id => document.getElementById(id);
 
-function showToast(msg, duration = 2500) {
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), duration);
+function formatDate(d) {
+  if (!d) return '—';
+  const dt = new Date(d); if (isNaN(dt)) return d;
+  const mo = ['sty','lut','mar','kwi','maj','cze','lip','sie','wrz','paź','lis','gru'];
+  return `${dt.getDate()} ${mo[dt.getMonth()]} ${dt.getFullYear()}`;
 }
-
-function formatDate(dateStr) {
-  if (!dateStr) return '—';
-  const [y, m, d] = dateStr.split('-');
-  const months = ['stycznia','lutego','marca','kwietnia','maja','czerwca','lipca','sierpnia','września','października','listopada','grudnia'];
-  return `${parseInt(d)} ${months[parseInt(m) - 1]} ${y}`;
+function formatDateTime(d) {
+  if (!d) return '—';
+  const dt = new Date(d); if (isNaN(dt)) return d;
+  const mo = ['sty','lut','mar','kwi','maj','cze','lip','sie','wrz','paź','lis','gru'];
+  return `${dt.getDate()} ${mo[dt.getMonth()]} ${dt.getFullYear()}, ${String(dt.getHours()).padStart(2,'0')}:${String(dt.getMinutes()).padStart(2,'0')}`;
 }
-
-function getDaysUntil(dateStr) {
+function daysUntil(dateStr) {
   if (!dateStr) return null;
   const today = new Date(); today.setHours(0,0,0,0);
-  const target = new Date(dateStr); target.setHours(0,0,0,0);
-  return Math.round((target - today) / 86400000);
+  const t = new Date(dateStr); t.setHours(0,0,0,0);
+  return Math.round((t - today) / 86400000);
+}
+function svcStatus(serwisy) {
+  if (!serwisy?.length) return { cls: 'due', label: 'Brak serwisu', badgeLabel: 'Brak serwisu' };
+  const sorted = [...serwisy].sort((a,b) => new Date(b.data_serwisu) - new Date(a.data_serwisu));
+  const months = (Date.now() - new Date(sorted[0].data_serwisu)) / (30*24*3600*1000);
+  if (months < 11) return { cls: 'ok',   label: '🟢 Aktualny',            badgeLabel: 'Aktualny' };
+  if (months < 12) return { cls: 'warn', label: '🟡 Wkrótce wymagany',    badgeLabel: 'Wkrótce' };
+  return              { cls: 'due',  label: '🔴 Przeterminowany',      badgeLabel: 'Przeterminowany' };
+}
+function reqStatusInfo(s) {
+  const m = {
+    new:         { label: 'Nowe',        step: 0, tagCls: 'tag-due' },
+    in_progress: { label: 'W trakcie',   step: 1, tagCls: 'tag-warn' },
+    scheduled:   { label: 'Zaplanowane', step: 2, tagCls: 'tag-blue' },
+    completed:   { label: 'Wykonane',    step: 3, tagCls: 'tag-ok' },
+    cancelled:   { label: 'Anulowane',   step: -1, tagCls: 'tag-muted' },
+  };
+  return m[s] || m.new;
+}
+function showToast(msg, dur=2800) {
+  const t=$('toast'); t.textContent=msg; t.classList.add('show');
+  clearTimeout(t._tid); t._tid=setTimeout(()=>t.classList.remove('show'),dur);
 }
 
-function getCountdownClass(days) {
-  if (days === null) return 'none';
-  if (days < 0) return 'due';
-  if (days <= 60) return 'warn';
-  return 'ok';
-}
-
-/* ── THEME ──────────────────────────────────────── */
+/* ── THEME ───────────────────────────────────────────── */
 function initTheme() {
-  const saved = localStorage.getItem('portal_theme') || 'light';
-  document.documentElement.setAttribute('data-theme', saved);
-  updateThemeBtn(saved);
+  const th = localStorage.getItem('portal_theme')||'light';
+  document.documentElement.setAttribute('data-theme', th);
+  updateThemeBtn(th);
 }
-
 function toggleTheme() {
   const cur = document.documentElement.getAttribute('data-theme');
-  const next = cur === 'light' ? 'dark' : 'light';
+  const next = cur==='light'?'dark':'light';
   document.documentElement.setAttribute('data-theme', next);
   localStorage.setItem('portal_theme', next);
   updateThemeBtn(next);
 }
-
-function updateThemeBtn(theme) {
-  const btn = document.getElementById('themeBtn');
-  if (btn) btn.innerHTML = theme === 'light'
-    ? '<i class="ti ti-moon"></i>'
-    : '<i class="ti ti-sun"></i>';
+function updateThemeBtn(th) {
+  const b=$('themeBtn');
+  if (b) b.innerHTML = th==='light' ? '<i class="ti ti-moon"></i>' : '<i class="ti ti-sun"></i>';
 }
 
-/* ── AUTH FORMS ─────────────────────────────────── */
-function showForm(id) {
-  ['formLogin','formRegister','formReset'].forEach(f => {
-    document.getElementById(f).style.display = f === id ? '' : 'none';
-  });
-  ['loginErr','regErr','regInfo','resetErr','resetInfo'].forEach(e => {
-    const el = document.getElementById(e);
-    if (el) el.classList.remove('visible');
-  });
+/* ── SCREENS ─────────────────────────────────────────── */
+function showScreen(id) {
+  ['sActivate','sLogin','sPending','sApp'].forEach(s=>$(s).style.display='none');
+  $(id).style.display='';
+  if (id==='sApp') $(id).classList.add('on');
 }
 
-function setAuthLoading(btnId, loading) {
-  const btn = document.getElementById(btnId);
-  if (!btn) return;
-  btn.classList.toggle('loading', loading);
+/* ── AUTH ────────────────────────────────────────────── */
+function showLoginForm(id) {
+  ['fLogin','fReset'].forEach(f=>$(f).style.display = f===id?'':'none');
+  ['loginErr','resetErr','resetOk'].forEach(e=>{ const el=$(e); if(el) el.classList.remove('show'); });
 }
+function authLoading(btnId, on) { $(btnId).classList.toggle('loading',on); }
 
 async function doLogin() {
-  const email = document.getElementById('lEmail').value.trim();
-  const pass  = document.getElementById('lPass').value;
-  const err   = document.getElementById('loginErr');
-  err.classList.remove('visible');
-  if (!email || !pass) { err.textContent = 'Wypełnij wszystkie pola.'; err.classList.add('visible'); return; }
-  setAuthLoading('btnLogin', true);
-  const { error } = await sb.auth.signInWithPassword({ email, password: pass });
-  setAuthLoading('btnLogin', false);
-  if (error) { err.textContent = 'Błędny email lub hasło.'; err.classList.add('visible'); }
-}
-
-async function doRegister() {
-  const name  = document.getElementById('rName').value.trim();
-  const email = document.getElementById('rEmail').value.trim();
-  const pass  = document.getElementById('rPass').value;
-  const err   = document.getElementById('regErr');
-  const info  = document.getElementById('regInfo');
-  err.classList.remove('visible'); info.classList.remove('visible');
-  if (!name || !email || !pass) { err.textContent = 'Wypełnij wszystkie pola.'; err.classList.add('visible'); return; }
-  if (pass.length < 8) { err.textContent = 'Hasło musi mieć co najmniej 8 znaków.'; err.classList.add('visible'); return; }
-  setAuthLoading('btnReg', true);
-  const { error } = await sb.auth.signUp({ email, password: pass, options: { data: { full_name: name } } });
-  setAuthLoading('btnReg', false);
-  if (error) { err.textContent = error.message || 'Błąd rejestracji.'; err.classList.add('visible'); return; }
-  info.textContent = 'Konto zostało utworzone. Sprawdź skrzynkę email i potwierdź adres, a następnie zaloguj się.';
-  info.classList.add('visible');
+  const email=$('lEmail').value.trim(), pass=$('lPass').value;
+  const err=$('loginErr'); err.classList.remove('show');
+  if (!email||!pass) { err.textContent='Wypełnij wszystkie pola.'; err.classList.add('show'); return; }
+  authLoading('btnLogin',true);
+  const {error} = await sb.auth.signInWithPassword({email, password:pass});
+  authLoading('btnLogin',false);
+  if (error) { err.textContent='Błędny email lub hasło.'; err.classList.add('show'); }
 }
 
 async function doReset() {
-  const email = document.getElementById('resetEmail').value.trim();
-  const err   = document.getElementById('resetErr');
-  const info  = document.getElementById('resetInfo');
-  err.classList.remove('visible'); info.classList.remove('visible');
-  if (!email) { err.textContent = 'Podaj adres email.'; err.classList.add('visible'); return; }
-  setAuthLoading('btnReset', true);
-  const { error } = await sb.auth.resetPasswordForEmail(email, {
-    redirectTo: window.location.origin + '/'
-  });
-  setAuthLoading('btnReset', false);
-  if (error) { err.textContent = 'Błąd: ' + error.message; err.classList.add('visible'); return; }
-  info.textContent = 'Link do resetowania hasła wysłany na ' + email + '. Sprawdź skrzynkę pocztową.';
-  info.classList.add('visible');
+  const email=$('resetEmail').value.trim();
+  const err=$('resetErr'), ok=$('resetOk');
+  err.classList.remove('show'); ok.classList.remove('show');
+  if (!email) { err.textContent='Podaj adres email.'; err.classList.add('show'); return; }
+  authLoading('btnReset',true);
+  await sb.auth.resetPasswordForEmail(email, {redirectTo: location.origin+'/'});
+  authLoading('btnReset',false);
+  ok.textContent = 'Link do resetowania hasła wysłany na '+email+'. Sprawdź skrzynkę pocztową.';
+  ok.classList.add('show');
 }
 
 async function doLogout() {
-  closeModal('logoutModal');
+  closeModal('logoutOv');
+  teardownRealtime();
   await sb.auth.signOut();
 }
 
-/* ── MODALS ─────────────────────────────────────── */
-function openLogoutModal() {
-  document.getElementById('logoutModal').classList.add('visible');
+/* ── ACTIVATION ──────────────────────────────────────── */
+function evalPassStrength(pass) {
+  let score = 0;
+  if (pass.length >= 8) score++;
+  if (/[A-Z]/.test(pass)) score++;
+  if (/[0-9]/.test(pass)) score++;
+  if (/[^A-Za-z0-9]/.test(pass)) score++;
+  const cls = score <= 1 ? 'weak' : score <= 2 ? 'ok' : 'strong';
+  ['ps1','ps2','ps3','ps4'].forEach((id,i) => {
+    const el=$(id); el.className='ps-bar';
+    if (i < score) el.classList.add(cls);
+  });
 }
 
-function closeModal(id) {
-  document.getElementById(id).classList.remove('visible');
-}
+$('actPass').addEventListener('input', () => evalPassStrength($('actPass').value));
 
-document.getElementById('logoutModal').addEventListener('click', e => {
-  if (e.target === e.currentTarget) closeModal('logoutModal');
-});
+async function doActivate() {
+  const pass=$('actPass').value, pass2=$('actPass2').value;
+  const err=$('actErr'), ok=$('actOk');
+  err.classList.remove('show'); ok.classList.remove('show');
+  if (!pass||!pass2) { err.textContent='Wypełnij oba pola.'; err.classList.add('show'); return; }
+  if (pass.length<8) { err.textContent='Hasło musi mieć co najmniej 8 znaków.'; err.classList.add('show'); return; }
+  if (pass!==pass2) { err.textContent='Hasła nie są identyczne.'; err.classList.add('show'); return; }
+  authLoading('btnActivate',true);
 
-/* ── DATA LOADING ───────────────────────────────── */
-async function loadData(user) {
-  const { data: client } = await sb
-    .from('klienci')
-    .select('*')
-    .eq('email', user.email)
-    .maybeSingle();
-  if (!client) return null;
+  const res = await fetch(`${SB_URL}/functions/v1/handle-portal-auth`, {
+    method: 'POST',
+    headers: {'Content-Type':'application/json', 'apikey': SB_KEY},
+    body: JSON.stringify({token: activationToken, password: pass}),
+  });
+  const data = await res.json();
+  authLoading('btnActivate',false);
 
-  const { data: services } = await sb
-    .from('serwisy')
-    .select('*')
-    .eq('klient_id', client.id)
-    .order('data_serwisu', { ascending: false });
-
-  return { client, services: services || [] };
-}
-
-/* ── RENDER: DASHBOARD ───────────────────────────── */
-function renderDashboard() {
-  const c = curClient;
-  const svcs = curServices;
-  const name = c.imie_nazwisko || curUser.email;
-  const firstName = name.split(' ')[0];
-  const days = getDaysUntil(c.nastepny_przeglad);
-  const cls = getCountdownClass(days);
-
-  let countdownHTML;
-  if (days === null) {
-    countdownHTML = `
-      <div class="countdown-num none">—</div>
-      <div class="countdown-unit">brak daty przeglądu</div>`;
-  } else if (days < 0) {
-    countdownHTML = `
-      <div class="countdown-num due">${Math.abs(days)}</div>
-      <div class="countdown-unit">dni po terminie!</div>
-      <div class="countdown-date"><i class="ti ti-calendar-x"></i>${formatDate(c.nastepny_przeglad)}</div>`;
-  } else if (days === 0) {
-    countdownHTML = `
-      <div class="countdown-num warn">Dziś</div>
-      <div class="countdown-unit">termin przeglądu</div>
-      <div class="countdown-date"><i class="ti ti-calendar"></i>${formatDate(c.nastepny_przeglad)}</div>`;
-  } else {
-    countdownHTML = `
-      <div class="countdown-num ${cls}">${days}</div>
-      <div class="countdown-unit">dni do przeglądu</div>
-      <div class="countdown-date"><i class="ti ti-calendar-event"></i>${formatDate(c.nastepny_przeglad)}</div>`;
+  if (!data.success) {
+    err.textContent = data.error || 'Błąd aktywacji.'; err.classList.add('show'); return;
   }
 
-  let badgeText = '—';
-  if (days === null) badgeText = 'Brak terminu';
-  else if (days < 0)  badgeText = 'Po terminie';
-  else if (days <= 60) badgeText = 'Wkrótce';
-  else badgeText = 'Na bieżąco';
+  ok.textContent='Konto aktywowane! Trwa logowanie…'; ok.classList.add('show');
+  // Remove token from URL
+  history.replaceState(null,'',location.pathname + location.hash);
 
-  const lastSvc = svcs[0];
-  const lastSvcHTML = lastSvc
-    ? `<div class="last-svc-hdr">
-         <div class="last-svc-title"><i class="ti ti-tool" style="font-size:13px"></i> Ostatni serwis</div>
-         <div class="last-svc-date">${formatDate(lastSvc.data_serwisu)}</div>
-       </div>
-       ${lastSvc.status === 'w_realizacji'
-         ? '<div style="margin-bottom:6px"><span class="svc-badge wip"><i class="ti ti-progress" style="font-size:11px"></i> W realizacji</span></div>'
-         : ''}
-       <div class="last-svc-desc">${esc(lastSvc.opis)}</div>`
-    : `<div class="last-svc-title"><i class="ti ti-tool" style="font-size:13px"></i> Ostatni serwis</div>
-       <div class="last-svc-empty">Brak wpisów serwisowych</div>`;
-
-  document.getElementById('dashContent').innerHTML = `
-    <div class="sec-hdr" style="margin-bottom:16px">
-      <div>
-        <div class="sec-title">Dzień dobry, ${esc(firstName)}</div>
-        <div class="sec-sub">Stan Twojego kotła</div>
-      </div>
-    </div>
-
-    <div class="boiler-hero">
-      <div class="boiler-hero-ico"><i class="ti ti-flame"></i></div>
-      ${c.kociol
-        ? `<div class="boiler-model">${esc(c.kociol)}</div>
-           ${c.nr_seryjny ? `<div class="boiler-serial">Nr seryjny: ${esc(c.nr_seryjny)}</div>` : ''}`
-        : `<div class="boiler-none">Brak danych o kotle</div>`}
-      ${(c.data_instalacji || c.kociol) ? `
-      <div class="boiler-hero-row">
-        ${c.data_instalacji ? `<div class="boiler-hero-stat">
-          <div class="boiler-hero-stat-val">${formatDate(c.data_instalacji)}</div>
-          <div class="boiler-hero-stat-lbl">Data instalacji</div>
-        </div>` : ''}
-        ${c.nastepny_przeglad ? `<div class="boiler-hero-stat">
-          <div class="boiler-hero-stat-val">${formatDate(c.nastepny_przeglad)}</div>
-          <div class="boiler-hero-stat-lbl">Następny przegląd</div>
-        </div>` : ''}
-      </div>` : ''}
-    </div>
-
-    <div class="countdown-card ${cls}">
-      <div class="countdown-top">
-        <div class="countdown-lbl"><i class="ti ti-calendar-stats" style="font-size:13px"></i> Następny przegląd</div>
-        <div class="countdown-badge ${cls}">${badgeText}</div>
-      </div>
-      ${countdownHTML}
-    </div>
-
-    <div class="stats-row">
-      <div class="stat-card">
-        <div class="stat-num">${svcs.length}</div>
-        <div class="stat-lbl">Serwisów łącznie</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-num" style="font-size:${lastSvc ? '18px' : '34px'};letter-spacing:-1px">
-          ${lastSvc ? formatDate(lastSvc.data_serwisu).replace(/ \d{4}$/,'') : '—'}
-        </div>
-        <div class="stat-lbl">Ostatni serwis</div>
-      </div>
-    </div>
-
-    <div class="last-svc">${lastSvcHTML}</div>
-
-    <div style="text-align:center;padding:16px 0;font-size:11px;color:var(--text3)">${footerVersion} · portal.serwiscieplo.pl</div>
-  `;
+  const {error} = await sb.auth.signInWithPassword({email: data.email, password: pass});
+  if (error) { err.textContent='Aktywacja OK, ale logowanie nie powiodło się: '+error.message; err.classList.add('show'); }
 }
 
-/* ── RENDER: SERWISY ─────────────────────────────── */
-function renderSerwisy() {
-  const svcs = curServices;
-  document.getElementById('svcsSubtitle').textContent =
-    svcs.length ? `${svcs.length} wpis${svcs.length === 1 ? '' : svcs.length < 5 ? 'y' : 'ów'}` : 'Brak wpisów';
+/* ── DATA ────────────────────────────────────────────── */
+async function loadData() {
+  const [{data:clients},{data:requests}] = await Promise.all([
+    sb.from('klienci').select('*, serwisy(data_serwisu,status)').eq('portal_user_id',curUser.id).order('imie_nazwisko'),
+    sb.from('service_requests').select('*').eq('portal_user_id',curUser.id).order('created_at',{ascending:false}),
+  ]);
+  curClients  = clients  || [];
+  allRequests = requests || [];
+  updateReqBadge();
+}
 
-  if (!svcs.length) {
-    document.getElementById('svcsContent').innerHTML = `
-      <div class="empty-state">
-        <i class="ti ti-tool"></i>
-        <p>Brak historii serwisów.<br>Twoje serwisy pojawią się tutaj po wykonaniu pierwszego przeglądu.</p>
-      </div>`;
+function updateReqBadge() {
+  const active = allRequests.filter(r=>!['completed','cancelled'].includes(r.status)).length;
+  const b = $('reqBadge');
+  b.textContent = active || '';
+  b.classList.toggle('show', active > 0);
+}
+
+/* ── REALTIME ────────────────────────────────────────── */
+function setupRealtime() {
+  rtChannel = sb.channel('portal_rt_'+curUser.id)
+    .on('postgres_changes', {event:'*', schema:'public', table:'service_requests',
+        filter:'portal_user_id=eq.'+curUser.id}, handleRealtimeChange)
+    .subscribe();
+}
+function teardownRealtime() {
+  if (rtChannel) { sb.removeChannel(rtChannel); rtChannel=null; }
+}
+function handleRealtimeChange(payload) {
+  // Update local state
+  const rec = payload.new || payload.old;
+  if (payload.eventType==='DELETE') {
+    allRequests = allRequests.filter(r=>r.id!==payload.old.id);
+  } else if (payload.eventType==='INSERT') {
+    allRequests = [payload.new, ...allRequests];
+    showToast('Nowe zgłoszenie zapisane.');
+  } else if (payload.eventType==='UPDATE') {
+    allRequests = allRequests.map(r=>r.id===payload.new.id ? payload.new : r);
+    showToast('Serwisant zaktualizował Twoje zgłoszenie.');
+  }
+  updateReqBadge();
+  // Re-render if on relevant route
+  const hash = location.hash.replace('#','') || '/dashboard';
+  if (hash==='/requests' || hash.startsWith('/request/')) render();
+}
+
+/* ── ROUTER ──────────────────────────────────────────── */
+function navigateTo(path) {
+  location.hash = '#'+path;
+}
+function goBack() {
+  history.back();
+}
+window.addEventListener('hashchange', render);
+
+function render() {
+  if (!curUser || !($('sApp').classList.contains('on'))) return;
+  const hash = decodeURIComponent(location.hash.replace('#','') || '/dashboard');
+
+  // Bottom nav
+  ['dashboard','requests','profile'].forEach(k=>{
+    $('bn-'+k).classList.toggle('on', hash==='/'+(k==='dashboard'?'dashboard':k) || (k==='dashboard'&&hash==='/'));
+  });
+
+  // Back button + logo
+  const isTop = ['/dashboard','/requests','/profile','/','/requests'].includes(hash);
+  $('backBtn').style.display = isTop ? 'none' : '';
+  $('topLogo').style.display = isTop ? '' : 'none';
+
+  const rv = $('rv');
+  rv.className = 'rv rv-anim';
+  // force reflow for animation
+  void rv.offsetHeight;
+  rv.className = 'rv rv-anim';
+
+  if (hash === '/dashboard' || hash === '/') return renderDashboard();
+  if (hash === '/requests')                  return renderRequests();
+  if (hash === '/profile')                   return renderProfile();
+  if (hash.startsWith('/klient/'))           return renderKlientDetail(hash.split('/')[2]);
+  if (hash === '/request/new')               return renderNewRequest();
+  if (hash.startsWith('/request/'))          return renderRequestDetail(hash.split('/')[2]);
+  // fallback
+  renderDashboard();
+}
+
+/* ── VIEW: DASHBOARD ─────────────────────────────────── */
+function renderDashboard() {
+  $('bn-dashboard').classList.add('on');
+  if (!curClients.length) {
+    $('rv').innerHTML = `
+      <div class="sec-hdr"><div><div class="sec-title">Moje obiekty</div><div class="sec-sub">Twoje przypisane kotłownie</div></div></div>
+      <div class="empty"><i class="ti ti-building-community"></i><p>Brak przypisanych obiektów.<br>Skontaktuj się z serwisantem.</p></div>
+      <div class="ver">${V} · portal.serwiscieplo.pl</div>`;
     return;
   }
 
-  document.getElementById('svcsContent').innerHTML = svcs.map(s => `
-    <div class="svc-item${s.status === 'w_realizacji' ? ' wip' : ''}">
-      <div class="svc-meta">
-        <div class="svc-date"><i class="ti ti-calendar"></i>${formatDate(s.data_serwisu)}</div>
-        <span class="svc-badge ${s.status === 'w_realizacji' ? 'wip' : 'done'}">
-          ${s.status === 'w_realizacji'
-            ? '<i class="ti ti-progress" style="font-size:11px"></i> W realizacji'
-            : '<i class="ti ti-check" style="font-size:11px"></i> Zakończony'}
-        </span>
+  const cardsHtml = curClients.map(c => {
+    const st = svcStatus(c.serwisy);
+    const lastSvc = c.serwisy?.sort((a,b)=>new Date(b.data_serwisu)-new Date(a.data_serwisu))[0];
+    const initials = (c.imie_nazwisko||'?').split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
+    const activeReqs = allRequests.filter(r=>r.klient_id===c.id && !['completed','cancelled'].includes(r.status)).length;
+
+    return `<div class="klient-card ${st.cls}" onclick="navigateTo('/klient/${c.id}')">
+      <div class="kc-top">
+        <div style="display:flex;align-items:center;gap:10px">
+          <div class="kc-av">${esc(initials)}</div>
+          <div>
+            <div class="kc-name">${esc(c.imie_nazwisko||'Obiekt')}</div>
+            <div class="kc-addr">${esc(c.adres||'—')}</div>
+            ${c.kociol ? `<div class="kc-boiler"><i class="ti ti-flame" style="font-size:11px"></i> ${esc(c.kociol)}</div>` : ''}
+          </div>
+        </div>
+        <span class="tag tag-${st.cls==='ok'?'ok':st.cls==='warn'?'warn':'due'}">${esc(st.badgeLabel)}</span>
       </div>
-      <div class="svc-desc">${esc(s.opis)}</div>
-    </div>`).join('');
+      <div class="kc-footer">
+        <div style="font-size:12px;color:var(--text2)">
+          ${lastSvc ? `Ostatni serwis: <strong>${formatDate(lastSvc.data_serwisu)}</strong>` : '<span style="color:var(--text3)">Brak serwisów</span>'}
+          ${activeReqs ? ` · <span style="color:var(--accent2);font-weight:700">${activeReqs} aktywne zgłoszenie${activeReqs>1?'a':''}</span>` : ''}
+        </div>
+        <div class="kc-btns">
+          <button class="btn btn-sm btn-primary" onclick="event.stopPropagation();navigateTo('/request/new?klient_id=${c.id}')">
+            <i class="ti ti-plus"></i> Zamów serwis
+          </button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+
+  $('rv').innerHTML = `
+    <div class="sec-hdr">
+      <div>
+        <div class="sec-title">Dzień dobry${curClients[0]?.imie_nazwisko ? ', '+esc(curClients[0].imie_nazwisko.split(' ')[0]) : ''}</div>
+        <div class="sec-sub">${curClients.length === 1 ? 'Twój obiekt' : `${curClients.length} obiekty`}</div>
+      </div>
+    </div>
+    ${cardsHtml}
+    <div class="ver">${V} · portal.serwiscieplo.pl</div>`;
 }
 
-/* ── RENDER: MOJE DANE ───────────────────────────── */
-function renderDane() {
-  const c = curClient;
-  const fld = (val, empty = '—') => val
-    ? `<span>${esc(val)}</span>`
-    : `<span class="empty">${empty}</span>`;
+/* ── VIEW: KLIENT DETAIL ──────────────────────────────── */
+async function renderKlientDetail(id) {
+  $('rv').innerHTML = '<div class="loader-wrap"><div class="loader"></div></div>';
 
-  document.getElementById('daneContent').innerHTML = `
-    <div class="detail-section">
-      <div class="detail-section-title"><i class="ti ti-user"></i> Dane kontaktowe</div>
+  const client = curClients.find(c=>c.id===id);
+  if (!client) { $('rv').innerHTML='<div class="empty"><i class="ti ti-alert-circle"></i><p>Obiekt nie znaleziony.</p></div>'; return; }
+
+  const {data:serwisy} = await sb.from('serwisy').select('*').eq('klient_id',id).order('data_serwisu',{ascending:false});
+  const clientRequests = allRequests.filter(r=>r.klient_id===id && !['completed','cancelled'].includes(r.status));
+  const st = svcStatus(serwisy||[]);
+  const days = daysUntil(client.nastepny_przeglad);
+  const cls = days===null?'none':days<0?'due':days<=60?'warn':'ok';
+
+  let cdHtml;
+  if (days===null) cdHtml='<div class="cdown-num none">—</div><div class="cdown-unit">brak terminu</div>';
+  else if (days<0)  cdHtml=`<div class="cdown-num due">${Math.abs(days)}</div><div class="cdown-unit">dni po terminie!</div><div class="cdown-date"><i class="ti ti-calendar-x"></i>${formatDate(client.nastepny_przeglad)}</div>`;
+  else if (days===0) cdHtml=`<div class="cdown-num warn">Dziś!</div><div class="cdown-unit">termin przeglądu</div>`;
+  else              cdHtml=`<div class="cdown-num ${cls}">${days}</div><div class="cdown-unit">dni do przeglądu</div><div class="cdown-date"><i class="ti ti-calendar-event"></i>${formatDate(client.nastepny_przeglad)}</div>`;
+
+  const svcsHtml = (serwisy?.length)
+    ? (serwisy||[]).map(s=>`
+      <div class="svc-item${s.status==='w_realizacji'?' wip':''}">
+        <div class="svc-meta">
+          <div class="svc-date-row"><i class="ti ti-calendar"></i>${formatDate(s.data_serwisu)}</div>
+          <span class="svc-badge ${s.status==='w_realizacji'?'wip':'done'}">
+            ${s.status==='w_realizacji'?'<i class="ti ti-progress" style="font-size:11px"></i> W realizacji':'<i class="ti ti-check" style="font-size:11px"></i> Zakończony'}
+          </span>
+        </div>
+        <div class="svc-desc">${esc(s.opis||'—')}</div>
+      </div>`).join('')
+    : '<div class="empty"><i class="ti ti-tool"></i><p>Brak historii serwisów.</p></div>';
+
+  const reqsHtml = clientRequests.length
+    ? clientRequests.map(r=>reqCardHtml(r)).join('')
+    : '<div style="font-size:13px;color:var(--text3);padding:8px 0">Brak aktywnych zgłoszeń.</div>';
+
+  $('rv').innerHTML = `
+    <div class="boiler-hero">
+      <div class="bh-ico"><i class="ti ti-flame"></i></div>
+      ${client.kociol ? `<div class="bh-model">${esc(client.kociol)}</div>${client.nr_seryjny?`<div class="bh-serial">Nr ser.: ${esc(client.nr_seryjny)}</div>`:''}` : `<div style="font-size:15px;opacity:.75;position:relative;z-index:1">${esc(client.imie_nazwisko||'Obiekt')}</div>`}
+      ${client.adres?`<div class="bh-serial" style="margin-top:4px"><i class="ti ti-map-pin" style="font-size:11px"></i> ${esc(client.adres)}</div>`:''}
+      ${(client.data_instalacji||client.nastepny_przeglad)?`<div class="bh-row">
+        ${client.data_instalacji?`<div><div class="bh-stat-val">${formatDate(client.data_instalacji)}</div><div class="bh-stat-lbl">Instalacja</div></div>`:''}
+        ${client.nastepny_przeglad?`<div><div class="bh-stat-val">${formatDate(client.nastepny_przeglad)}</div><div class="bh-stat-lbl">Następny przegląd</div></div>`:''}
+      </div>`:''}
+    </div>
+
+    <div class="cdown ${cls}">
+      <div class="cdown-top">
+        <div class="cdown-lbl"><i class="ti ti-calendar-stats" style="font-size:13px"></i> Status przeglądu</div>
+        <span class="cdown-badge ${cls}">${st.badgeLabel}</span>
+      </div>
+      ${cdHtml}
+    </div>
+
+    <div style="margin-bottom:14px">
+      <button class="btn btn-primary btn-full" onclick="navigateTo('/request/new?klient_id=${id}')">
+        <i class="ti ti-plus"></i> Zamów wizytę serwisową
+      </button>
+    </div>
+
+    <div class="card">
+      <div class="card-hdr"><i class="ti ti-clipboard-list"></i> Aktywne zgłoszenia</div>
+      ${reqsHtml}
+    </div>
+
+    <div class="card">
+      <div class="card-hdr"><i class="ti ti-history"></i> Historia serwisów</div>
+      ${svcsHtml}
+    </div>
+
+    ${(client.sw_wyswietlacz||client.sw_modul||client.notatki)?`
+    <div class="card">
+      <div class="card-hdr"><i class="ti ti-settings"></i> Dane techniczne</div>
       <div class="fields-grid">
-        <div class="field field-full"><label>Imię i nazwisko</label>${fld(c.imie_nazwisko)}</div>
-        <div class="field"><label>Telefon</label>${c.telefon
-          ? `<span><a href="tel:${esc(c.telefon)}" class="phone-link" style="color:var(--blue);text-decoration:none;font-weight:600">${esc(c.telefon)}</a></span>`
-          : `<span class="empty">—</span>`}
-        </div>
-        <div class="field"><label>Email</label>${fld(c.email)}</div>
-        <div class="field field-full"><label>Adres</label>${fld(c.adres)}</div>
+        ${client.sw_wyswietlacz?`<div class="field"><label>Oprog. wyświetlacza</label><span>${esc(client.sw_wyswietlacz)}</span></div>`:''}
+        ${client.sw_modul?`<div class="field"><label>Oprog. modułu</label><span>${esc(client.sw_modul)}</span></div>`:''}
+        ${client.notatki?`<div class="field field-full"><label>Notatki</label><span>${esc(client.notatki)}</span></div>`:''}
       </div>
-    </div>
+    </div>`:''}
 
-    <div class="detail-section">
-      <div class="detail-section-title"><i class="ti ti-flame"></i> Kocioł grzewczy</div>
-      <div class="fields-grid">
-        <div class="field field-full"><label>Model kotła</label>${fld(c.kociol,'Nie określono')}</div>
-        <div class="field"><label>Nr seryjny</label>${fld(c.nr_seryjny)}</div>
-        <div class="field"><label>Data instalacji</label>${fld(c.data_instalacji ? formatDate(c.data_instalacji) : null)}</div>
-        <div class="field"><label>Następny przegląd</label>${fld(c.nastepny_przeglad ? formatDate(c.nastepny_przeglad) : null)}</div>
-        ${c.sw_wyswietlacz ? `<div class="field"><label>Wer. opr. wyświetlacza</label>${fld(c.sw_wyswietlacz)}</div>` : ''}
-        ${c.sw_modul ? `<div class="field"><label>Wer. opr. modułu</label>${fld(c.sw_modul)}</div>` : ''}
-      </div>
-    </div>
-
-    ${c.notatki ? `
-    <div class="detail-section">
-      <div class="detail-section-title"><i class="ti ti-notes"></i> Notatki serwisanta</div>
-      <div style="font-size:13px;line-height:1.6;color:var(--text2)">${esc(c.notatki)}</div>
-    </div>` : ''}
-
-    <div style="text-align:center;padding:16px 0;font-size:11px;color:var(--text3)">${footerVersion} · portal.serwiscieplo.pl</div>
-  `;
+    <div class="ver">${V} · portal.serwiscieplo.pl</div>`;
 }
 
-/* ── RENDER: KONTAKT ─────────────────────────────── */
-function renderKontakt() {
-  document.getElementById('kontaktContent').innerHTML = `
-    <div class="contact-hero">
-      <div class="contact-hero-ico"><i class="ti ti-headset"></i></div>
-      <div class="contact-hero-name">${esc(SERWISANT_NAME)}</div>
-      <div class="contact-hero-sub">Serwis i przeglądy kotłów grzewczych</div>
+/* ── VIEW: ZGŁOSZENIA (wszystkie) ─────────────────────── */
+function renderRequests() {
+  const active   = allRequests.filter(r=>!['completed','cancelled'].includes(r.status));
+  const archived = allRequests.filter(r=> ['completed','cancelled'].includes(r.status));
+
+  const renderGroup = (arr, empty) => arr.length
+    ? arr.map(r=>reqCardHtml(r)).join('')
+    : `<div style="font-size:13px;color:var(--text3);padding:8px 0">${empty}</div>`;
+
+  $('rv').innerHTML = `
+    <div class="sec-hdr">
+      <div><div class="sec-title">Moje zgłoszenia</div>
+      <div class="sec-sub">${allRequests.length ? `${allRequests.length} łącznie` : 'Brak zgłoszeń'}</div></div>
+      <button class="btn btn-sm btn-primary" onclick="navigateTo('/request/new')"><i class="ti ti-plus"></i> Nowe</button>
+    </div>
+    ${active.length?`<div class="card-hdr" style="margin-bottom:10px"><i class="ti ti-clock" style="font-size:14px"></i> Aktywne</div>`:''}
+    ${renderGroup(active,'Brak aktywnych zgłoszeń.')}
+    ${archived.length?`<div class="card-hdr" style="margin:16px 0 10px"><i class="ti ti-check" style="font-size:14px"></i> Archiwum</div>`:''}
+    ${archived.length?renderGroup(archived,''):''}
+    <div class="ver">${V} · portal.serwiscieplo.pl</div>`;
+}
+
+function reqCardHtml(r) {
+  const si = reqStatusInfo(r.status);
+  const client = curClients.find(c=>c.id===r.klient_id);
+  return `<div class="req-card${r.priority==='urgent'?' urgent':''}" onclick="navigateTo('/request/${r.id}')">
+    <div class="req-top">
+      <div>
+        <div class="req-date"><i class="ti ti-calendar" style="font-size:12px"></i> ${formatDate(r.created_at)}</div>
+        ${client?`<div style="font-size:11px;color:var(--text2);margin-top:2px">${esc(client.imie_nazwisko)}</div>`:''}
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">
+        <span class="tag ${si.tagCls}">${si.label}</span>
+        ${r.priority==='urgent'?'<span class="tag tag-due" style="font-size:10px">🔴 Pilne</span>':''}
+      </div>
+    </div>
+    <div class="req-desc">${esc(r.description)}</div>
+    <div class="req-foot">
+      ${r.preferred_date?`<i class="ti ti-calendar-event"></i>${formatDate(r.preferred_date)}`:''}
+      ${r.scheduled_date?`<i class="ti ti-clock-check"></i>${formatDateTime(r.scheduled_date)}`:''}
+    </div>
+  </div>`;
+}
+
+/* ── VIEW: REQUEST DETAIL ────────────────────────────── */
+function renderRequestDetail(id) {
+  const r = allRequests.find(x=>x.id===id);
+  if (!r) { $('rv').innerHTML='<div class="empty"><i class="ti ti-alert-circle"></i><p>Zgłoszenie nie znalezione.</p></div>'; return; }
+
+  const si = reqStatusInfo(r.status);
+  const client = curClients.find(c=>c.id===r.klient_id);
+  const steps = ['new','in_progress','scheduled','completed'];
+
+  const stepsHtml = steps.map((s,i) => {
+    const info = reqStatusInfo(s);
+    const done  = r.status!=='cancelled' && si.step > i;
+    const active = r.status!=='cancelled' && si.step === i;
+    return `<div class="status-step ${done?'done':active?'active':''}">
+      <div class="ss-dot">${done?'<i class="ti ti-check" style="font-size:13px"></i>':i+1}</div>
+      <div class="ss-lbl">${info.label}</div>
+    </div>`;
+  }).join('');
+
+  const lineW = r.status==='cancelled' ? 0 : Math.min(si.step / (steps.length-1) * 100, 100);
+
+  const scheduledBannerHtml = r.status==='scheduled' && r.scheduled_date ? `
+    <div class="scheduled-banner">
+      <i class="ti ti-calendar-check"></i>
+      <div>
+        <div class="sched-date">${formatDateTime(r.scheduled_date)}</div>
+        <div class="sched-sub">Zaplanowany termin wizyty serwisowej${r.scheduled_by==='phone'?' (uzgodniony telefonicznie)':''}</div>
+        ${!r.client_confirmed_at ? `<div class="confirm-btns">
+          <button class="btn btn-sm btn-primary" onclick="confirmSchedule('${r.id}')">
+            <i class="ti ti-check"></i> Potwierdzam termin
+          </button>
+          <button class="btn btn-sm btn-outline" onclick="requestReschedule('${r.id}')">
+            <i class="ti ti-calendar-x"></i> Proszę o inny termin
+          </button>
+        </div>` : `<div style="margin-top:8px;font-size:12px;color:var(--green);font-weight:600"><i class="ti ti-check"></i> Termin potwierdzony ${formatDate(r.client_confirmed_at)}</div>`}
+      </div>
+    </div>` : '';
+
+  $('rv').innerHTML = `
+    <div class="sec-hdr">
+      <div>
+        <div class="sec-title">Zgłoszenie serwisowe</div>
+        <div class="sec-sub">${formatDate(r.created_at)}${client?' · '+esc(client.imie_nazwisko):''}</div>
+      </div>
+      <span class="tag ${si.tagCls}">${si.label}</span>
     </div>
 
-    <div class="contact-btns">
-      <a href="tel:${esc(SERWISANT_PHONE)}" class="btn-contact call">
-        <i class="ti ti-phone"></i>
-        Zadzwoń: ${esc(SERWISANT_PHONE)}
-      </a>
-      <a href="mailto:${esc(SERWISANT_EMAIL)}" class="btn-contact email">
-        <i class="ti ti-mail"></i>
-        Napisz email
-      </a>
+    <div class="card" style="padding:14px 16px">
+      <div class="card-hdr"><i class="ti ti-arrow-narrow-right"></i> Postęp zgłoszenia</div>
+      ${r.status==='cancelled'?'<div class="tag tag-muted" style="margin-bottom:8px">Zgłoszenie anulowane</div>':''}
+      <div class="status-bar" style="position:relative">
+        <div class="status-bar-line" style="width:${lineW}%"></div>
+        ${stepsHtml}
+      </div>
     </div>
 
-    <div class="contact-info-card">
-      <div class="contact-info-row">
-        <div class="contact-info-ico orange"><i class="ti ti-phone"></i></div>
+    ${scheduledBannerHtml}
+
+    <div class="req-det-section">
+      <div class="req-det-title"><i class="ti ti-file-description"></i> Szczegóły zgłoszenia</div>
+      <div class="card" style="padding:16px">
+        <div class="fields-grid">
+          <div class="field"><label>Priorytet</label><span>${r.priority==='urgent'?'🔴 Pilne':'⚪ Zwykłe'}</span></div>
+          <div class="field"><label>Preferowana data</label><span>${r.preferred_date?formatDate(r.preferred_date):'<span class="empty">Nie podano</span>'}</span></div>
+          <div class="field field-full"><label>Opis</label><span style="font-size:14px;line-height:1.6">${esc(r.description)}</span></div>
+        </div>
+      </div>
+    </div>
+
+    ${r.technician_note?`
+    <div class="req-det-section">
+      <div class="req-det-title"><i class="ti ti-message"></i> Odpowiedź serwisanta</div>
+      <div class="card" style="padding:16px;border-left:3px solid var(--accent)">
+        <div style="font-size:14px;line-height:1.6">${esc(r.technician_note)}</div>
+      </div>
+    </div>`:''}
+
+    <div class="req-det-section">
+      <div class="req-det-title"><i class="ti ti-phone"></i> Kontakt ze serwisantem</div>
+      <div class="contact-btns">
+        <a href="tel:${esc(SERWISANT_PHONE)}" class="btn-contact call"><i class="ti ti-phone"></i> ${esc(SERWISANT_PHONE)}</a>
+      </div>
+    </div>
+
+    <div class="ver">${V} · portal.serwiscieplo.pl</div>`;
+}
+
+async function confirmSchedule(reqId) {
+  const {error} = await sb.from('service_requests')
+    .update({client_confirmed_at: new Date().toISOString()})
+    .eq('id', reqId);
+  if (!error) { showToast('Termin potwierdzony.'); allRequests=allRequests.map(r=>r.id===reqId?{...r,client_confirmed_at:new Date().toISOString()}:r); render(); }
+  else showToast('Błąd: '+error.message);
+}
+
+async function requestReschedule(reqId) {
+  const note = prompt('Napisz krótko dlaczego ten termin Ci nie odpowiada:');
+  if (!note?.trim()) return;
+  const {error} = await sb.from('service_requests')
+    .update({status:'in_progress', technician_note:note, scheduled_date:null, client_confirmed_at:null})
+    .eq('id', reqId);
+  if (!error) { showToast('Prośba o zmianę terminu wysłana.'); allRequests=allRequests.map(r=>r.id===reqId?{...r,status:'in_progress',technician_note:note,scheduled_date:null}:r); render(); }
+  else showToast('Błąd: '+error.message);
+}
+
+/* ── VIEW: NOWE ZGŁOSZENIE ───────────────────────────── */
+function renderNewRequest() {
+  const params = new URLSearchParams(location.hash.includes('?') ? location.hash.split('?')[1] : '');
+  const klientId = params.get('klient_id');
+  const client = curClients.find(c=>c.id===klientId);
+
+  const clientOpts = curClients.map(c=>
+    `<option value="${c.id}" ${c.id===klientId?'selected':''}>${esc(c.imie_nazwisko)}</option>`
+  ).join('');
+
+  $('rv').innerHTML = `
+    <div class="sec-hdr">
+      <div><div class="sec-title">Nowe zgłoszenie</div>
+      <div class="sec-sub">Opisz problem lub powód wizyty</div></div>
+    </div>
+
+    ${client?`<div class="boiler-hero" style="padding:14px 18px;margin-bottom:14px">
+      <div style="font-size:12px;opacity:.7;margin-bottom:4px;position:relative;z-index:1">Obiekt</div>
+      <div style="font-size:16px;font-weight:800;position:relative;z-index:1">${esc(client.imie_nazwisko)}</div>
+      ${client.kociol?`<div style="font-size:12px;opacity:.72;position:relative;z-index:1">${esc(client.kociol)}</div>`:''}
+    </div>`:''}
+
+    <div class="card">
+      ${!client?`<div class="form-group">
+        <label>Obiekt *</label>
+        <select id="nrKlientId">${clientOpts}</select>
+      </div>`:'<input type="hidden" id="nrKlientId" value="'+klientId+'">'}
+
+      <div class="form-group">
+        <label>Opis problemu / powód wizyty *</label>
+        <textarea id="nrDesc" placeholder="Opisz szczegółowo co się dzieje, jakie są objawy, co słyszysz / widzisz…" maxlength="1000" oninput="$('nrCharCount').textContent=this.value.length+'/1000'"></textarea>
+        <div class="char-count" id="nrCharCount">0/1000</div>
+      </div>
+
+      <div class="form-group">
+        <label>Preferowana data wizyty</label>
+        <input type="date" id="nrDate" min="${new Date(Date.now()+86400000).toISOString().slice(0,10)}">
+        <div class="form-hint">Opcjonalne — podaj jeśli zależy Ci na konkretnym terminie</div>
+      </div>
+
+      <div class="form-group">
+        <label>Priorytet</label>
+        <div class="priority-toggle">
+          <button class="prio-opt sel-normal" id="prioNorm" onclick="setPrio('normal')">
+            <i class="ti ti-check-circle"></i> Zwykłe
+          </button>
+          <button class="prio-opt" id="prioUrg" onclick="setPrio('urgent')">
+            <i class="ti ti-alert-circle" style="color:var(--red)"></i> Pilne 🔴
+          </button>
+        </div>
+        <div class="form-hint">Pilne = awaria lub brak ogrzewania/ciepłej wody</div>
+      </div>
+
+      <div class="auth-err" id="nrErr"></div>
+
+      <button class="btn btn-primary btn-full" id="btnNrSubmit" onclick="submitRequest()">
+        <i class="ti ti-send"></i> Wyślij zgłoszenie
+      </button>
+    </div>
+    <div class="ver">${V} · portal.serwiscieplo.pl</div>`;
+}
+
+let _prio = 'normal';
+function setPrio(p) {
+  _prio = p;
+  $('prioNorm').className = 'prio-opt' + (p==='normal'?' sel-normal':'');
+  $('prioUrg').className  = 'prio-opt' + (p==='urgent'?' sel-urgent':'');
+}
+
+async function submitRequest() {
+  const klientId = $('nrKlientId').value || ($('nrKlientId').options?.[$('nrKlientId').selectedIndex]?.value);
+  const desc = $('nrDesc').value.trim();
+  const prefDate = $('nrDate').value || null;
+  const err = $('nrErr'); err.classList.remove('show');
+
+  if (!klientId) { err.textContent='Wybierz obiekt.'; err.classList.add('show'); return; }
+  if (desc.length < 10) { err.textContent='Opis musi mieć co najmniej 10 znaków.'; err.classList.add('show'); return; }
+
+  const client = curClients.find(c=>c.id===klientId);
+  const btn = $('btnNrSubmit'); btn.classList.add('loading'); btn.style.pointerEvents='none';
+
+  const {data, error} = await sb.from('service_requests').insert({
+    klient_id: klientId,
+    portal_user_id: curUser.id,
+    technician_id: client?.user_id || null,
+    description: desc,
+    priority: _prio,
+    preferred_date: prefDate,
+  }).select().single();
+
+  btn.classList.remove('loading'); btn.style.pointerEvents='';
+
+  if (error) { err.textContent='Błąd: '+error.message; err.classList.add('show'); return; }
+
+  allRequests = [data, ...allRequests];
+  updateReqBadge();
+  showToast('Zgłoszenie wysłane — serwisant zostanie powiadomiony.');
+  history.back();
+}
+
+/* ── VIEW: PROFIL ────────────────────────────────────── */
+function renderProfile() {
+  const name = curClients[0]?.imie_nazwisko || curUser?.email || '?';
+  const initials = name.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
+
+  $('rv').innerHTML = `
+    <div class="profile-hero">
+      <div class="profile-av">${esc(initials)}</div>
+      <div class="profile-name">${esc(name)}</div>
+      <div class="profile-email">${esc(curUser?.email||'')}</div>
+    </div>
+
+    <div class="card">
+      <div class="card-hdr"><i class="ti ti-phone"></i> Kontakt z serwisantem</div>
+      <div class="contact-btns">
+        <a href="tel:${esc(SERWISANT_PHONE)}" class="btn-contact call">
+          <i class="ti ti-phone"></i> Zadzwoń: ${esc(SERWISANT_PHONE)}
+        </a>
+        <a href="mailto:${esc(SERWISANT_EMAIL)}" class="btn-contact email">
+          <i class="ti ti-mail"></i> Napisz email
+        </a>
+      </div>
+      <div>
+        <div class="contact-row">
+          <div class="contact-ico o"><i class="ti ti-phone"></i></div>
+          <div><div class="contact-lbl">Telefon</div><div class="contact-val">${esc(SERWISANT_PHONE)}</div></div>
+        </div>
+        <div class="contact-row">
+          <div class="contact-ico b"><i class="ti ti-mail"></i></div>
+          <div><div class="contact-lbl">Email</div><div class="contact-val">${esc(SERWISANT_EMAIL)}</div></div>
+        </div>
+        <div class="contact-row">
+          <div class="contact-ico g"><i class="ti ti-clock"></i></div>
+          <div><div class="contact-lbl">Godziny pracy</div><div class="contact-val">${esc(SERWISANT_HOURS)}</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-hdr"><i class="ti ti-settings"></i> Ustawienia</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:4px 0">
         <div>
-          <div class="contact-info-lbl">Telefon</div>
-          <div class="contact-info-val">${esc(SERWISANT_PHONE)}</div>
+          <div style="font-size:14px;font-weight:600">Motyw</div>
+          <div style="font-size:12px;color:var(--text2)">Jasny / Ciemny</div>
         </div>
-      </div>
-      <div class="contact-info-row">
-        <div class="contact-info-ico blue"><i class="ti ti-mail"></i></div>
-        <div>
-          <div class="contact-info-lbl">Email</div>
-          <div class="contact-info-val">${esc(SERWISANT_EMAIL)}</div>
-        </div>
-      </div>
-      <div class="contact-info-row">
-        <div class="contact-info-ico green"><i class="ti ti-clock"></i></div>
-        <div>
-          <div class="contact-info-lbl">Godziny pracy</div>
-          <div class="contact-info-val">${esc(SERWISANT_HOURS)}</div>
-        </div>
+        <button class="btn btn-sm btn-outline" onclick="toggleTheme()">
+          <i class="ti ti-sun" id="themeIco"></i> Zmień
+        </button>
       </div>
     </div>
 
-    <div style="text-align:center;padding:20px 0;font-size:11px;color:var(--text3)">
-      ${footerVersion} · portal.serwiscieplo.pl
-    </div>
-  `;
+    <button class="btn btn-full" style="background:var(--red-light);color:var(--red);border:1px solid var(--red-border);margin-bottom:16px" onclick="openModal('logoutOv')">
+      <i class="ti ti-logout"></i> Wyloguj się
+    </button>
+    <div class="ver">${V} · portal.serwiscieplo.pl</div>`;
 }
 
-/* ── NAWIGACJA ──────────────────────────────────── */
-function switchView(view) {
-  curView = view;
-  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-  document.querySelectorAll('.bn-item').forEach(b => b.classList.remove('active'));
-  document.getElementById('view' + view.charAt(0).toUpperCase() + view.slice(1)).classList.add('active');
-  document.getElementById('bn-' + view).classList.add('active');
-  if (!dataLoaded) return;
-  if (view === 'dashboard') renderDashboard();
-  else if (view === 'serwisy') renderSerwisy();
-  else if (view === 'dane') renderDane();
-  else if (view === 'kontakt') renderKontakt();
-  document.getElementById('content').scrollTop = 0;
-}
+/* ── MODALS ──────────────────────────────────────────── */
+function openModal(id) { $(id).classList.add('on'); }
+function closeModal(id) { $(id).classList.remove('on'); }
+$('logoutOv').addEventListener('click', e=>{ if(e.target===e.currentTarget) closeModal('logoutOv'); });
 
-/* ── AUTH STATE ─────────────────────────────────── */
-function showAuth() {
-  document.getElementById('authWrap').style.display = '';
-  document.getElementById('pendingWrap').style.display = 'none';
-  document.getElementById('app').classList.remove('visible');
-  showForm('formLogin');
-}
-
-function showPending(email) {
-  document.getElementById('authWrap').style.display = 'none';
-  document.getElementById('pendingWrap').style.display = '';
-  document.getElementById('app').classList.remove('visible');
-  document.getElementById('pendingEmail').textContent = email;
-}
-
-function showApp(user) {
-  document.getElementById('authWrap').style.display = 'none';
-  document.getElementById('pendingWrap').style.display = 'none';
-  document.getElementById('app').classList.add('visible');
-
-  const nameStr = curClient.imie_nazwisko || user.email;
-  const initials = nameStr.split(' ').map(w => w[0]).join('').toUpperCase().slice(0,2);
-  document.getElementById('userAv').textContent = initials;
-  document.getElementById('userName').textContent = nameStr.split(' ')[0];
-}
-
+/* ── AUTH STATE ──────────────────────────────────────── */
 sb.auth.onAuthStateChange(async (event, session) => {
   if (session?.user) {
     curUser = session.user;
-    const result = await loadData(curUser);
-    if (!result) {
-      showPending(curUser.email);
+    const rv = $('rv');
+    if (rv) rv.innerHTML = '<div class="loader-wrap"><div class="loader"></div></div>';
+    showScreen('sApp');
+    await loadData();
+    setupRealtime();
+
+    const name = curClients[0]?.imie_nazwisko || curUser.email || '?';
+    const initials = name.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
+    $('userAv').textContent = initials;
+    $('userName').textContent = name.split(' ')[0];
+
+    if (!curClients.length) {
+      // Client has no klienci records linked yet
+      showScreen('sPending');
+      $('pendingEmail').textContent = curUser.email;
       return;
     }
-    curClient   = result.client;
-    curServices = result.services;
-    dataLoaded  = true;
-    showApp(curUser);
-    renderDashboard();
-    renderKontakt();
+
+    render();
     checkIosBanner();
   } else {
-    curUser = null; curClient = null; curServices = []; dataLoaded = false;
-    showAuth();
+    curUser=null; curClients=[]; allRequests=[]; teardownRealtime();
+    if (!activationToken) showScreen('sLogin');
   }
 });
 
-/* ── KEYBOARD SUBMIT ────────────────────────────── */
-document.querySelectorAll('.fg input').forEach(inp => {
-  inp.addEventListener('keydown', e => {
-    if (e.key !== 'Enter') return;
-    const form = inp.closest('[id^=form]');
-    if (!form) return;
-    if (form.id === 'formLogin')    doLogin();
-    else if (form.id === 'formRegister') doRegister();
-    else if (form.id === 'formReset')    doReset();
-  });
+/* ── INIT ────────────────────────────────────────────── */
+(function init() {
+  initTheme();
+
+  // Check for activation token in URL
+  const urlParams = new URLSearchParams(location.search);
+  activationToken = urlParams.get('token');
+  if (activationToken) {
+    showScreen('sActivate');
+    return;
+  }
+
+  // Default: show login (auth state change will override)
+  showScreen('sLogin');
+
+  // PWA Service Worker
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/sw.js').catch(()=>{});
+  }
+})();
+
+// Enter key support for login
+['lEmail','lPass'].forEach(id=>{
+  $(id)?.addEventListener('keydown', e=>{ if(e.key==='Enter') doLogin(); });
+});
+['actPass','actPass2'].forEach(id=>{
+  $(id)?.addEventListener('keydown', e=>{ if(e.key==='Enter') doActivate(); });
 });
 
-/* ── PWA / IOS INSTALL ──────────────────────────── */
+/* ── iOS INSTALL ─────────────────────────────────────── */
 function checkIosBanner() {
   const isIos = /iphone|ipad|ipod/i.test(navigator.userAgent);
-  const isStandalone = window.matchMedia('(display-mode: standalone)').matches || navigator.standalone;
-  if (isIos && !isStandalone && !sessionStorage.getItem('iosBannerDismissed')) {
-    document.getElementById('iosBanner').classList.add('show');
+  const standalone = window.matchMedia('(display-mode: standalone)').matches || navigator.standalone;
+  if (isIos && !standalone && !sessionStorage.getItem('iosBannerDone')) {
+    showToast('Dodaj do ekranu głównego: Udostępnij → Dodaj do ekranu', 5000);
+    sessionStorage.setItem('iosBannerDone','1');
   }
 }
-
-function dismissIosBanner() {
-  document.getElementById('iosBanner').classList.remove('show');
-  sessionStorage.setItem('iosBannerDismissed', '1');
-}
-
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/sw.js').catch(() => {});
-}
-
-/* ── INIT ───────────────────────────────────────── */
-initTheme();
 </script>
 </body>
 </html>
