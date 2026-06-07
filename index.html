@@ -1259,12 +1259,17 @@ $('logoutOv').addEventListener('click', e=>{ if(e.target===e.currentTarget) clos
 
 /* ── AUTH STATE ──────────────────────────────────────── */
 sb.auth.onAuthStateChange(async (event, session) => {
+  console.log('[auth]', event, session?.user?.email || 'no user', 'clients:', curClients.length);
   if (session?.user) {
     curUser = session.user;
 
-    // TOKEN_REFRESHED i inne zdarzenia tła: tylko aktualizuj curUser.
-    // Dane są już w pamięci, realtime subscription obsługuje zmiany na żywo.
-    if (event !== 'SIGNED_IN' && event !== 'INITIAL_SESSION') return;
+    // Inicjalizuj przy logowaniu i starcie aplikacji.
+    // TOKEN_REFRESHED: odśwież tylko gdy dane nie są jeszcze załadowane
+    // (scenariusz: token wygasł, INITIAL_SESSION odpalił z wygasłym tokenem,
+    //  a TOKEN_REFRESHED przynosi świeży token — bez tego dane nigdy nie załadują się).
+    const isInitialLoad = event === 'SIGNED_IN' || event === 'INITIAL_SESSION';
+    const needsRetry    = event === 'TOKEN_REFRESHED' && curClients.length === 0;
+    if (!isInitialLoad && !needsRetry) return;
 
     // --- Pełna inicjalizacja tylko przy logowaniu/starcie ---
     const rv = $('rv');
