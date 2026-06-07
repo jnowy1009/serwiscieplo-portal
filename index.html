@@ -488,7 +488,7 @@ html,body{height:100%;font-family:-apple-system,'Segoe UI',Helvetica,sans-serif;
 const SB_URL = 'https://dzekzfxhqxiifuaesjum.supabase.co';
 const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR6ZWt6ZnhocXhpaWZ1YWVzanVtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg2MDY3ODEsImV4cCI6MjA5NDE4Mjc4MX0.SUFa62jSD0pThTtyN1n7eUKWRtPD42v4JP5vRNPf9fA';
 const sb = supabase.createClient(SB_URL, SB_KEY);
-const V = 'v2.1.0';
+const V = 'v2.1.1';
 
 /* Dane kontaktowe serwisanta — dostosuj do swoich */
 let SERWISANT_NAME  = 'SerwisCiepło';
@@ -502,6 +502,8 @@ let curClients  = [];
 let allRequests = [];
 let rtChannel   = null;
 let activationToken = null;
+// ID zgłoszeń zmienionych lokalnie — by echo realtime nie pokazało mylącego toastu „Serwisant zaktualizował…".
+const localUpdateIds = new Set();
 
 /* ── HELPERS ─────────────────────────────────────────── */
 const esc = s => String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
@@ -657,11 +659,32 @@ async function doActivate() {
 }
 
 /* ── DATA ────────────────────────────────────────────── */
-async function loadData() {
-  const [clientsRes, requestsRes] = await Promise.all([
+function queryPortalData() {
+  return Promise.all([
     sb.from('klienci').select('*, serwisy(data_serwisu)').eq('portal_user_id',curUser.id).order('imie_nazwisko'),
     sb.from('service_requests').select('*').eq('portal_user_id',curUser.id).order('created_at',{ascending:false}),
-  ]);
+  ]).then(([clientsRes, requestsRes]) => ({ clientsRes, requestsRes }));
+}
+
+function isAuthError(err) {
+  if (!err) return false;
+  return err.code === 'PGRST301' || err.code === '401'
+      || /jwt|token|expired|unauthor/i.test(err.message || '');
+}
+
+async function loadData() {
+  let { clientsRes, requestsRes } = await queryPortalData();
+
+  // Token mógł wygasnąć (po ~godzinie lub po wybudzeniu PWA) — odśwież sesję i ponów RAZ.
+  // To eliminuje "znikanie danych" po odświeżeniu strony z zapisaną, ale wygasłą sesją.
+  if (isAuthError(clientsRes.error) || isAuthError(requestsRes.error)) {
+    console.warn('[loadData] token wygasł — odświeżam sesję i ponawiam zapytanie');
+    await sb.auth.refreshSession();
+    const { data:{ session } } = await sb.auth.getSession();
+    if (session?.user) curUser = session.user;
+    ({ clientsRes, requestsRes } = await queryPortalData());
+  }
+
   if (clientsRes.error) {
     console.error('[loadData] klienci:', clientsRes.error);
     throw new Error(clientsRes.error.message);
@@ -710,7 +733,9 @@ function handleRealtimeChange(payload) {
     showToast('Nowe zgłoszenie zapisane.');
   } else if (payload.eventType==='UPDATE') {
     allRequests = allRequests.map(r=>r.id===payload.new.id ? payload.new : r);
-    showToast('Serwisant zaktualizował Twoje zgłoszenie.');
+    // Toast tylko dla zmian od serwisanta — pomiń echo zmian zainicjowanych lokalnie przez klienta.
+    if (localUpdateIds.has(payload.new.id)) localUpdateIds.delete(payload.new.id);
+    else showToast('Serwisant zaktualizował Twoje zgłoszenie.');
   }
   updateReqBadge();
   // Re-render if on relevant route
@@ -737,7 +762,7 @@ function render() {
   });
 
   // Back button + logo
-  const isTop = ['/dashboard','/requests','/profile','/','/requests'].includes(hash);
+  const isTop = ['/dashboard','/requests','/profile','/'].includes(hash);
   $('backBtn').style.display = isTop ? 'none' : '';
   $('topLogo').style.display = isTop ? '' : 'none';
 
@@ -1036,6 +1061,7 @@ function renderRequestDetail(id) {
 
 async function cancelRequest(reqId) {
   if (!confirm('Czy na pewno chcesz anulować to zgłoszenie?')) return;
+  localUpdateIds.add(reqId);
   const {error} = await sb.from('service_requests').update({status:'cancelled'}).eq('id', reqId);
   if (!error) {
     showToast('Zgłoszenie anulowane.');
@@ -1045,6 +1071,7 @@ async function cancelRequest(reqId) {
 }
 
 async function confirmSchedule(reqId) {
+  localUpdateIds.add(reqId);
   const {error} = await sb.from('service_requests')
     .update({client_confirmed_at: new Date().toISOString()})
     .eq('id', reqId);
@@ -1055,6 +1082,7 @@ async function confirmSchedule(reqId) {
 async function requestReschedule(reqId) {
   const note = prompt('Napisz krótko dlaczego ten termin Ci nie odpowiada:');
   if (!note?.trim()) return;
+  localUpdateIds.add(reqId);
   const {error} = await sb.from('service_requests')
     .update({status:'in_progress', technician_note:note, scheduled_date:null, client_confirmed_at:null})
     .eq('id', reqId);
@@ -1258,96 +1286,97 @@ function closeModal(id) { $(id).classList.remove('on'); }
 $('logoutOv').addEventListener('click', e=>{ if(e.target===e.currentTarget) closeModal('logoutOv'); });
 
 /* ── BOOTSTRAP APP ───────────────────────────────────── */
+// Flagi chronią przed równoległą/podwójną inicjalizacją (np. INITIAL_SESSION + TOKEN_REFRESHED).
+let bootstrapping = false;
+let appReady = false;
+
 async function bootstrapApp() {
-  const rv = $('rv');
-  if (rv) rv.innerHTML = '<div class="loader-wrap"><div class="loader"></div></div>';
-  showScreen('sApp');
-
+  if (bootstrapping) return;
+  bootstrapping = true;
   try {
-    await loadData();
-  } catch(err) {
-    console.error('[loadData]', err);
-    if (rv) rv.innerHTML = `<div class="empty" style="padding:40px 20px;text-align:center">
-      <i class="ti ti-wifi-off" style="font-size:48px;color:var(--text3);display:block;margin-bottom:16px"></i>
-      <div style="font-size:15px;font-weight:700;color:var(--text);margin-bottom:8px">Błąd ładowania danych</div>
-      <div style="font-size:13px;color:var(--text2);margin-bottom:20px">Sprawdź połączenie z internetem i spróbuj ponownie.</div>
-      <button class="btn btn-primary" onclick="location.reload()"><i class="ti ti-refresh"></i> Odśwież</button>
-    </div>`;
-    return;
+    const rv = $('rv');
+    if (rv && !appReady) rv.innerHTML = '<div class="loader-wrap"><div class="loader"></div></div>';
+    showScreen('sApp');
+
+    try {
+      await loadData();
+    } catch(err) {
+      console.error('[bootstrap] loadData:', err);
+      if (rv) rv.innerHTML = `<div class="empty" style="padding:40px 20px;text-align:center">
+        <i class="ti ti-wifi-off" style="font-size:48px;color:var(--text3);display:block;margin-bottom:16px"></i>
+        <div style="font-size:15px;font-weight:700;color:var(--text);margin-bottom:8px">Błąd ładowania danych</div>
+        <div style="font-size:13px;color:var(--text2);margin-bottom:20px">Sprawdź połączenie z internetem i spróbuj ponownie.</div>
+        <button class="btn btn-primary" onclick="location.reload()"><i class="ti ti-refresh"></i> Odśwież</button>
+      </div>`;
+      return;
+    }
+
+    appReady = true;
+    const name = curClients[0]?.imie_nazwisko || curUser.email || '?';
+    const initials = name.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
+    $('userAv').textContent = initials;
+    $('userName').textContent = name.split(' ')[0];
+
+    if (!curClients.length) {
+      showScreen('sPending');
+      $('pendingEmail').textContent = curUser.email;
+      return;
+    }
+
+    setupRealtime();
+    render();
+    checkIosBanner();
+  } finally {
+    bootstrapping = false;
   }
-
-  const name = curClients[0]?.imie_nazwisko || curUser.email || '?';
-  const initials = name.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
-  $('userAv').textContent = initials;
-  $('userName').textContent = name.split(' ')[0];
-
-  if (!curClients.length) {
-    showScreen('sPending');
-    $('pendingEmail').textContent = curUser.email;
-    return;
-  }
-
-  setupRealtime();
-  render();
-  checkIosBanner();
 }
 
-/* ── AUTH STATE ──────────────────────────────────────── */
-// Obsługuje tylko zdarzenia zmiany stanu (SIGNED_IN, SIGNED_OUT).
-// Ładowanie przy starcie (page refresh) obsługuje getSession() w init().
-sb.auth.onAuthStateChange(async (event, session) => {
-  console.log('[auth]', event, session?.user?.email || 'no user');
+/* ── AUTH STATE — jedyne źródło prawdy o sesji ───────── */
+// WAŻNE (supabase-js v2): callback MUSI być synchroniczny i NIE wolno w nim
+// await-ować metod sb.auth.* ani sb.from(). Wewnętrzny lock GoTrue (navigator.locks)
+// powoduje wtedy deadlock — to była przyczyna zawieszania portalu po odświeżeniu strony.
+// Dlatego pracę odraczamy przez setTimeout(...,0), co zwalnia lock przed zapytaniami do bazy.
+sb.auth.onAuthStateChange((event, session) => {
+  console.log('[auth]', event, session?.user?.email || 'brak sesji');
   if (session?.user) {
     curUser = session.user;
-    if (event === 'SIGNED_IN') {
-      // Świeże logowanie — załaduj dane
-      await bootstrapApp();
-    }
-    // TOKEN_REFRESHED, USER_UPDATED itp.: zaktualizuj curUser, dane zostają w pamięci
+    const wantBootstrap =
+      event === 'SIGNED_IN' ||
+      (event === 'INITIAL_SESSION' && !activationToken) ||
+      (event === 'TOKEN_REFRESHED' && !appReady);
+    if (wantBootstrap) setTimeout(bootstrapApp, 0);
   } else {
-    curUser=null; curClients=[]; allRequests=[]; teardownRealtime();
+    appReady = false;
+    curUser = null; curClients = []; allRequests = []; teardownRealtime();
     if (!activationToken) showScreen('sLogin');
   }
 });
 
 /* ── INIT ────────────────────────────────────────────── */
-(async function init() {
+(function init() {
   initTheme();
 
-  // Force logout via URL: portal.serwiscieplo.pl?logout=1
+  // Wymuszone wylogowanie: portal.serwiscieplo.pl?logout=1
   const urlParams = new URLSearchParams(location.search);
   if (urlParams.get('logout')) {
     Object.keys(localStorage).filter(k => k.startsWith('sb-')).forEach(k => localStorage.removeItem(k));
-    await sb.auth.signOut();
-    location.href = location.pathname;
+    sb.auth.signOut().finally(() => { location.href = location.pathname; });
     return;
   }
 
-  // Check for activation token in URL
+  // Token aktywacyjny w URL
   activationToken = urlParams.get('token');
-  if (activationToken) {
-    showScreen('sActivate');
-    return;
-  }
+  if (activationToken) { showScreen('sActivate'); return; }
 
-  // Wyrejestruj wszystkie Service Workery — portal wymaga połączenia z Supabase,
-  // SW nie jest potrzebny i powodował problemy z cacheowaniem.
+  // Domyślnie ekran logowania — INITIAL_SESSION (onAuthStateChange) przejmie, jeśli jest sesja.
+  showScreen('sLogin');
+
+  // Wyrejestruj wszystkie Service Workery — portal działa tylko online (Supabase),
+  // SW nie jest potrzebny i powodował problemy z cacheowaniem starego kodu.
   if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.getRegistrations().then(regs => {
-      regs.forEach(r => r.unregister());
-    });
-  }
-
-  // Sprawdź sesję bezpośrednio — niezawodne na wszystkich platformach i przy każdym odświeżeniu.
-  // getSession() poczeka na odświeżenie tokenu jeśli jest wygasły, i zwróci aktualną sesję.
-  // Nie polegamy na INITIAL_SESSION z onAuthStateChange (ma problemy z timingiem w supabase-js v2).
-  const { data: { session } } = await sb.auth.getSession();
-  console.log('[init] getSession:', session?.user?.email || 'no session');
-  if (session?.user) {
-    curUser = session.user;
-    await bootstrapApp();
-  } else {
-    showScreen('sLogin');
+    navigator.serviceWorker.getRegistrations()
+      .then(regs => regs.forEach(r => r.unregister()))
+      .catch(()=>{});
   }
 })();
 
