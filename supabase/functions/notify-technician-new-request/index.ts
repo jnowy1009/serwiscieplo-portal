@@ -1,9 +1,50 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import webpush from 'npm:web-push@3.6.7'
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+}
+
+// VAPID — te same sekrety co w panelu (funkcja send-reminders)
+const VAPID_PUBLIC = Deno.env.get('VAPID_PUBLIC_KEY') || ''
+const VAPID_PRIVATE = Deno.env.get('VAPID_PRIVATE_KEY') || ''
+const VAPID_SUBJECT = Deno.env.get('VAPID_SUBJECT') || 'mailto:kontakt@serwiscieplo.pl'
+if (VAPID_PUBLIC && VAPID_PRIVATE) {
+  webpush.setVapidDetails(VAPID_SUBJECT, VAPID_PUBLIC, VAPID_PRIVATE)
+}
+
+// Wysyła Web Push na wszystkie urządzenia technika; czyści wygasłe subskrypcje (404/410).
+async function sendPushToTechnician(supa: any, techId: string, payload: unknown): Promise<number> {
+  if (!VAPID_PUBLIC || !VAPID_PRIVATE) {
+    console.warn('[push] brak kluczy VAPID — pomijam push')
+    return 0
+  }
+  const { data: subs } = await supa
+    .from('push_subscriptions')
+    .select('id, endpoint, p256dh, auth')
+    .eq('user_id', techId)
+  if (!subs?.length) return 0
+
+  let sent = 0
+  await Promise.all(subs.map(async (s: any) => {
+    try {
+      await webpush.sendNotification(
+        { endpoint: s.endpoint, keys: { p256dh: s.p256dh, auth: s.auth } },
+        JSON.stringify(payload),
+      )
+      sent++
+    } catch (e: any) {
+      const code = e?.statusCode
+      if (code === 404 || code === 410) {
+        await supa.from('push_subscriptions').delete().eq('id', s.id)
+      } else {
+        console.error('[push] błąd wysyłki', code, e?.body ?? e?.message)
+      }
+    }
+  }))
+  return sent
 }
 
 serve(async (req) => {
@@ -32,22 +73,6 @@ serve(async (req) => {
     const techId = sr.technician_id ?? klient.user_id
     if (!techId) throw new Error('Brak przypisanego serwisanta (technician_id i user_id są null)')
 
-    const { data: serwisant } = await supa
-      .from('serwisanci')
-      .select('email')
-      .eq('user_id', techId)
-      .maybeSingle()
-
-    let techEmail = serwisant?.email?.trim() || null
-    if (!techEmail) {
-      const { data: techData } = await supa.auth.admin.getUserById(techId)
-      techEmail = techData?.user?.email || null
-    }
-    if (!techEmail) throw new Error('Email serwisanta nie znaleziony')
-
-    const resendKey = Deno.env.get('RESEND_API_KEY')
-    if (!resendKey) throw new Error('RESEND_API_KEY nie jest ustawiony')
-
     const priorityLabel = sr.priority === 'urgent' ? '🔴 PILNE' : '⚪ Zwykłe'
     const preferredDateLabel = sr.preferred_date
       ? new Date(sr.preferred_date).toLocaleDateString('pl-PL', {
@@ -55,26 +80,64 @@ serve(async (req) => {
         })
       : 'Nie podano'
 
-    const emailRes = await fetch('https://api.resend.com/emails', {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${resendKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        from: 'Portal SerwisCiepło <kontakt@serwiscieplo.pl>',
-        to: [techEmail],
-        subject: `Nowe zgłoszenie od ${klient.imie_nazwisko}`,
-        html: buildNotifEmail(klient, sr, priorityLabel, preferredDateLabel),
-      }),
-    })
-
-    if (!emailRes.ok) {
-      const txt = await emailRes.text()
-      throw new Error(`Resend error (${emailRes.status}): ${txt}`)
+    // ── 1. PUSH na telefon technika (best-effort — nie blokuje emaila) ──
+    let pushSent = 0
+    try {
+      const descShort = (sr.description || '').slice(0, 120)
+      pushSent = await sendPushToTechnician(supa, techId, {
+        title: sr.priority === 'urgent' ? '🔴 Pilne zgłoszenie' : '🔧 Nowe zgłoszenie',
+        body: `${klient.imie_nazwisko}: ${descShort}`,
+        tag: `sc-request-${sr.id}`,
+        url: `./?klient=${sr.klient_id}&req=${sr.id}`,
+        requireInteraction: true,
+      })
+    } catch (e) {
+      console.error('[push] nieoczekiwany błąd', e)
     }
 
-    return new Response(JSON.stringify({ success: true }), {
+    // ── 2. EMAIL do technika (best-effort) ──
+    let emailSent = false
+    let emailError: string | null = null
+    try {
+      const { data: serwisant } = await supa
+        .from('serwisanci')
+        .select('email')
+        .eq('user_id', techId)
+        .maybeSingle()
+
+      let techEmail = serwisant?.email?.trim() || null
+      if (!techEmail) {
+        const { data: techData } = await supa.auth.admin.getUserById(techId)
+        techEmail = techData?.user?.email || null
+      }
+      const resendKey = Deno.env.get('RESEND_API_KEY')
+      if (!techEmail) throw new Error('Email serwisanta nie znaleziony')
+      if (!resendKey) throw new Error('RESEND_API_KEY nie jest ustawiony')
+
+      const emailRes = await fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${resendKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          from: 'Portal SerwisCiepło <kontakt@serwiscieplo.pl>',
+          to: [techEmail],
+          subject: `Nowe zgłoszenie od ${klient.imie_nazwisko}`,
+          html: buildNotifEmail(klient, sr, priorityLabel, preferredDateLabel),
+        }),
+      })
+      if (!emailRes.ok) {
+        const txt = await emailRes.text()
+        throw new Error(`Resend error (${emailRes.status}): ${txt}`)
+      }
+      emailSent = true
+    } catch (e) {
+      emailError = e instanceof Error ? e.message : String(e)
+      console.error('[email]', emailError)
+    }
+
+    return new Response(JSON.stringify({ success: true, pushSent, emailSent, emailError }), {
       headers: { ...CORS, 'Content-Type': 'application/json' },
     })
 
