@@ -19,7 +19,7 @@
   --bg:#f0ede8;--surface:#fff;--surface2:#f7f4f0;--surface3:#ede9e3;
   --border:rgba(0,0,0,.08);--border2:rgba(0,0,0,.16);
   --text:#1c1917;--text2:#78716c;--text3:#a8a29e;
-  --accent:#c2410c;--accent2:#ea580c;--accent-light:#fff7ed;--accent-border:#fed7aa;
+  --accent:#2563eb;--accent2:#3b82f6;--accent-light:#eff6ff;--accent-border:#bfdbfe;
   --blue:#1d4ed8;--blue-light:#eff6ff;--blue-border:#bfdbfe;
   --green:#15803d;--green-light:#f0fdf4;--green-border:#bbf7d0;
   --red:#b91c1c;--red-light:#fef2f2;--red-border:#fecaca;
@@ -32,7 +32,7 @@
   --bg:#111010;--surface:#1c1c1c;--surface2:#252525;--surface3:#2f2f2f;
   --border:rgba(255,255,255,.07);--border2:rgba(255,255,255,.14);
   --text:#f5f5f4;--text2:#a8a29e;--text3:#57534e;
-  --accent-light:#1f0e05;--accent-border:#6b2d06;
+  --accent-light:#0c1a35;--accent-border:#1e3a6e;
   --blue-light:#0c1a35;--blue-border:#1e3a6e;
   --green-light:#071a0e;--green-border:#145228;
   --red-light:#1a0808;--red-border:#6b1111;
@@ -43,14 +43,14 @@ html,body{height:100%;font-family:-apple-system,'Segoe UI',Helvetica,sans-serif;
 
 /* ── AUTH / ACTIVATE ──────────────────────────────────── */
 .auth-bg{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;background:radial-gradient(ellipse at 20% 50%,#1a0a00 0%,#0d0d0d 50%,#050510 100%);position:relative;overflow:hidden}
-.auth-bg::before{content:'';position:absolute;width:500px;height:500px;left:-120px;top:-100px;border-radius:50%;background:radial-gradient(circle,rgba(194,65,12,.18) 0%,transparent 70%);animation:orb1 8s ease-in-out infinite;pointer-events:none}
-.auth-bg::after{content:'';position:absolute;width:400px;height:400px;right:-100px;bottom:-80px;border-radius:50%;background:radial-gradient(circle,rgba(234,88,12,.12) 0%,transparent 70%);animation:orb2 10s ease-in-out infinite;pointer-events:none}
+.auth-bg::before{content:'';position:absolute;width:500px;height:500px;left:-120px;top:-100px;border-radius:50%;background:radial-gradient(circle,rgba(37,99,235,.22) 0%,transparent 70%);animation:orb1 8s ease-in-out infinite;pointer-events:none}
+.auth-bg::after{content:'';position:absolute;width:400px;height:400px;right:-100px;bottom:-80px;border-radius:50%;background:radial-gradient(circle,rgba(59,130,246,.14) 0%,transparent 70%);animation:orb2 10s ease-in-out infinite;pointer-events:none}
 @keyframes orb1{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(30px,20px) scale(1.08)}}
 @keyframes orb2{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(-20px,-30px) scale(1.06)}}
 .auth-card{background:rgba(255,255,255,.04);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border:1px solid rgba(255,255,255,.08);border-radius:24px;padding:36px 32px;width:100%;max-width:400px;box-shadow:0 32px 80px rgba(0,0,0,.7),inset 0 1px 0 rgba(255,255,255,.06);animation:cardIn .45s cubic-bezier(.22,1,.36,1);position:relative;z-index:1}
 @keyframes cardIn{from{opacity:0;transform:translateY(28px) scale(.97)}to{opacity:1;transform:translateY(0) scale(1)}}
 .auth-logo{display:flex;align-items:center;gap:10px;margin-bottom:24px;justify-content:center}
-.auth-logo-flame{width:44px;height:44px;background:linear-gradient(135deg,var(--accent2),#f97316);border-radius:13px;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 20px rgba(234,88,12,.5);animation:flamePulse 2.5s ease-in-out infinite}
+.auth-logo-flame{width:44px;height:44px;background:linear-gradient(135deg,#ea580c,#f97316);border-radius:13px;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 20px rgba(234,88,12,.5);animation:flamePulse 2.5s ease-in-out infinite}
 .auth-logo-flame i{font-size:22px;color:#fff}
 @keyframes flamePulse{0%,100%{box-shadow:0 4px 20px rgba(234,88,12,.5)}50%{box-shadow:0 4px 32px rgba(234,88,12,.85)}}
 .auth-logo-text{font-size:21px;font-weight:800;letter-spacing:-.5px;color:#fff}
