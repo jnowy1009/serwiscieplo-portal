@@ -28,11 +28,20 @@ serve(async (req) => {
 
     if (!klient) throw new Error('Klient nie znaleziony')
 
-    // Pobierz email serwisanta
-    const { data: { user: tech } } = await supa.auth.admin.getUserById(
-      sr.technician_id ?? klient.user_id
-    )
-    if (!tech?.email) throw new Error('Email serwisanta nie znaleziony')
+    // Pobierz email serwisanta — najpierw z profilu serwisanci, fallback na auth email
+    const techId = sr.technician_id ?? klient.user_id
+    const { data: serwisant } = await supa
+      .from('serwisanci')
+      .select('email')
+      .eq('user_id', techId)
+      .maybeSingle()
+
+    let techEmail = serwisant?.email?.trim() || null
+    if (!techEmail) {
+      const { data: { user: tech } } = await supa.auth.admin.getUserById(techId)
+      techEmail = tech?.email || null
+    }
+    if (!techEmail) throw new Error('Email serwisanta nie znaleziony')
 
     const resendKey = Deno.env.get('RESEND_API_KEY')
     if (!resendKey) throw new Error('RESEND_API_KEY nie jest ustawiony')
@@ -52,7 +61,7 @@ serve(async (req) => {
       },
       body: JSON.stringify({
         from: 'Portal SerwisCiepło <kontakt@serwiscieplo.pl>',
-        to: [tech.email],
+        to: [techEmail],
         subject: `Nowe zgłoszenie od ${klient.imie_nazwisko}`,
         html: buildNotifEmail(klient, sr, priorityLabel, preferredDateLabel),
       }),

@@ -744,8 +744,8 @@ function render() {
   if (hash === '/requests')                  return renderRequests();
   if (hash === '/profile')                   return renderProfile();
   if (hash.startsWith('/klient/'))           return renderKlientDetail(hash.split('/')[2]);
-  if (hash === '/request/new')               return renderNewRequest();
-  if (hash.startsWith('/request/'))          return renderRequestDetail(hash.split('/')[2]);
+  if (hash.startsWith('/request/new'))       return renderNewRequest();
+  if (hash.startsWith('/request/'))          return renderRequestDetail(hash.replace(/\?.*$/,'').split('/')[2]);
   // fallback
   renderDashboard();
 }
@@ -1188,10 +1188,43 @@ function renderProfile() {
       </div>
     </div>
 
+    <div class="card">
+      <div class="card-hdr"><i class="ti ti-switch-horizontal"></i> Zmiana serwisanta</div>
+      <div style="font-size:13px;color:var(--text2);margin-bottom:12px;line-height:1.5">Jeśli chcesz przypisać się do nowego serwisanta, poproś go o wygenerowanie 6-znakowego kodu przejęcia i wpisz go poniżej.</div>
+      <div style="display:flex;gap:8px">
+        <input type="text" id="transferCodeInput" placeholder="np. A1B2C3" maxlength="6"
+          style="flex:1;padding:10px 12px;border:1px solid var(--border2);border-radius:var(--rs);font-size:16px;font-weight:700;letter-spacing:2px;text-transform:uppercase;background:var(--surface2);color:var(--text);font-family:inherit;text-align:center">
+        <button class="btn btn-primary" id="btnTransfer" onclick="applyTransferCode()">
+          <i class="ti ti-check"></i> Zastosuj
+        </button>
+      </div>
+      <div class="auth-err" id="transferErr" style="margin-top:8px"></div>
+      <div class="auth-ok" id="transferOk" style="margin-top:8px"></div>
+    </div>
+
     <button class="btn btn-full" style="background:var(--red-light);color:var(--red);border:1px solid var(--red-border);margin-bottom:16px" onclick="openModal('logoutOv')">
       <i class="ti ti-logout"></i> Wyloguj się
     </button>
     <div class="ver">${V} · portal.serwiscieplo.pl</div>`;
+}
+
+/* ── ZMIANA SERWISANTA ───────────────────────────────── */
+async function applyTransferCode() {
+  const code = ($('transferCodeInput')?.value || '').trim().toUpperCase();
+  const err = $('transferErr'); const ok = $('transferOk');
+  err.classList.remove('show'); ok.classList.remove('show');
+  if (code.length !== 6) { err.textContent = 'Wpisz 6-znakowy kod.'; err.classList.add('show'); return; }
+  const btn = $('btnTransfer'); btn.disabled = true;
+  const { data, error } = await sb.rpc('apply_transfer_code', { p_code: code });
+  btn.disabled = false;
+  if (error || !data?.success) {
+    err.textContent = data?.error || error?.message || 'Nieprawidłowy lub wygasły kod.';
+    err.classList.add('show');
+    return;
+  }
+  ok.textContent = 'Serwisant zmieniony! Strona zostanie odświeżona.';
+  ok.classList.add('show');
+  setTimeout(() => location.reload(), 2000);
 }
 
 /* ── MODALS ──────────────────────────────────────────── */
@@ -1206,7 +1239,20 @@ sb.auth.onAuthStateChange(async (event, session) => {
     const rv = $('rv');
     if (rv) rv.innerHTML = '<div class="loader-wrap"><div class="loader"></div></div>';
     showScreen('sApp');
-    await loadData();
+
+    try {
+      await loadData();
+    } catch(err) {
+      console.error('[loadData]', err);
+      if (rv) rv.innerHTML = `<div class="empty" style="padding:40px 20px;text-align:center">
+        <i class="ti ti-wifi-off" style="font-size:48px;color:var(--text3);display:block;margin-bottom:16px"></i>
+        <div style="font-size:15px;font-weight:700;color:var(--text);margin-bottom:8px">Błąd ładowania danych</div>
+        <div style="font-size:13px;color:var(--text2);margin-bottom:20px">Sprawdź połączenie z internetem i spróbuj ponownie.</div>
+        <button class="btn btn-primary" onclick="location.reload()"><i class="ti ti-refresh"></i> Odśwież</button>
+      </div>`;
+      return;
+    }
+
     setupRealtime();
 
     const name = curClients[0]?.imie_nazwisko || curUser.email || '?';
@@ -1215,7 +1261,6 @@ sb.auth.onAuthStateChange(async (event, session) => {
     $('userName').textContent = name.split(' ')[0];
 
     if (!curClients.length) {
-      // Client has no klienci records linked yet
       showScreen('sPending');
       $('pendingEmail').textContent = curUser.email;
       return;
