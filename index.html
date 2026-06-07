@@ -491,10 +491,10 @@ const sb = supabase.createClient(SB_URL, SB_KEY);
 const V = 'v2.0.0';
 
 /* Dane kontaktowe serwisanta — dostosuj do swoich */
-const SERWISANT_NAME  = 'SerwisCiepło';
-const SERWISANT_PHONE = '+48 600 000 000';
-const SERWISANT_EMAIL = 'serwis@serwiscieplo.pl';
-const SERWISANT_HOURS = 'Pn – Pt, 7:00–17:00';
+let SERWISANT_NAME  = 'SerwisCiepło';
+let SERWISANT_PHONE = '+48 600 000 000';
+let SERWISANT_EMAIL = 'serwis@serwiscieplo.pl';
+let SERWISANT_HOURS = 'Pn – Pt, 8:00–16:00';
 
 /* ── STATE ───────────────────────────────────────────── */
 let curUser     = null;
@@ -661,6 +661,18 @@ async function loadData() {
   ]);
   curClients  = clients  || [];
   allRequests = requests || [];
+
+  // Pobierz dane kontaktowe serwisanta przypisanego do klienta
+  const techId = curClients[0]?.user_id;
+  if (techId) {
+    const { data: tech } = await sb.from('serwisanci').select('*').eq('user_id', techId).maybeSingle();
+    if (tech) {
+      if (tech.nazwa)   SERWISANT_NAME  = tech.nazwa;
+      if (tech.telefon) SERWISANT_PHONE = tech.telefon;
+      if (tech.email)   SERWISANT_EMAIL = tech.email;
+      if (tech.godziny) SERWISANT_HOURS = tech.godziny;
+    }
+  }
   updateReqBadge();
 }
 
