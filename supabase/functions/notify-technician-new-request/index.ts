@@ -30,6 +30,8 @@ serve(async (req) => {
 
     // Pobierz email serwisanta — najpierw z profilu serwisanci, fallback na auth email
     const techId = sr.technician_id ?? klient.user_id
+    if (!techId) throw new Error('Brak przypisanego serwisanta (technician_id i user_id są null)')
+
     const { data: serwisant } = await supa
       .from('serwisanci')
       .select('email')
@@ -38,8 +40,8 @@ serve(async (req) => {
 
     let techEmail = serwisant?.email?.trim() || null
     if (!techEmail) {
-      const { data: { user: tech } } = await supa.auth.admin.getUserById(techId)
-      techEmail = tech?.email || null
+      const { data: techData } = await supa.auth.admin.getUserById(techId)
+      techEmail = techData?.user?.email || null
     }
     if (!techEmail) throw new Error('Email serwisanta nie znaleziony')
 

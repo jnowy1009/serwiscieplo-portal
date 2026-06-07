@@ -488,7 +488,7 @@ html,body{height:100%;font-family:-apple-system,'Segoe UI',Helvetica,sans-serif;
 const SB_URL = 'https://dzekzfxhqxiifuaesjum.supabase.co';
 const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR6ZWt6ZnhocXhpaWZ1YWVzanVtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg2MDY3ODEsImV4cCI6MjA5NDE4Mjc4MX0.SUFa62jSD0pThTtyN1n7eUKWRtPD42v4JP5vRNPf9fA';
 const sb = supabase.createClient(SB_URL, SB_KEY);
-const V = 'v2.0.0';
+const V = 'v2.1.0';
 
 /* Dane kontaktowe serwisanta — dostosuj do swoich */
 let SERWISANT_NAME  = 'SerwisCiepło';
@@ -1023,7 +1023,25 @@ function renderRequestDetail(id) {
       </div>
     </div>
 
+    ${!['completed','cancelled'].includes(r.status) ? `
+    <div class="req-det-section">
+      <button class="btn btn-full" style="background:var(--red-light);color:var(--red);border:1px solid var(--red-border);margin-top:4px"
+              onclick="cancelRequest('${r.id}')">
+        <i class="ti ti-x"></i> Anuluj zgłoszenie
+      </button>
+    </div>` : ''}
+
     <div class="ver">${V} · portal.serwiscieplo.pl</div>`;
+}
+
+async function cancelRequest(reqId) {
+  if (!confirm('Czy na pewno chcesz anulować to zgłoszenie?')) return;
+  const {error} = await sb.from('service_requests').update({status:'cancelled'}).eq('id', reqId);
+  if (!error) {
+    showToast('Zgłoszenie anulowane.');
+    allRequests = allRequests.map(r => r.id===reqId ? {...r, status:'cancelled'} : r);
+    render();
+  } else showToast('Błąd: '+error.message);
 }
 
 async function confirmSchedule(reqId) {
@@ -1241,26 +1259,34 @@ $('logoutOv').addEventListener('click', e=>{ if(e.target===e.currentTarget) clos
 
 /* ── AUTH STATE ──────────────────────────────────────── */
 sb.auth.onAuthStateChange(async (event, session) => {
+  // TOKEN_REFRESHED = Supabase automatycznie odnawia sesję co ~1h
+  // NIE resetujemy UI przy odświeżeniu tokenu — to powodowało zacinanie portalu
+  const isInitialLoad = event === 'SIGNED_IN' || event === 'INITIAL_SESSION';
+
   if (session?.user) {
     curUser = session.user;
-    const rv = $('rv');
-    if (rv) rv.innerHTML = '<div class="loader-wrap"><div class="loader"></div></div>';
-    showScreen('sApp');
+
+    if (isInitialLoad) {
+      const rv = $('rv');
+      if (rv) rv.innerHTML = '<div class="loader-wrap"><div class="loader"></div></div>';
+      showScreen('sApp');
+    }
 
     try {
       await loadData();
     } catch(err) {
       console.error('[loadData]', err);
-      if (rv) rv.innerHTML = `<div class="empty" style="padding:40px 20px;text-align:center">
-        <i class="ti ti-wifi-off" style="font-size:48px;color:var(--text3);display:block;margin-bottom:16px"></i>
-        <div style="font-size:15px;font-weight:700;color:var(--text);margin-bottom:8px">Błąd ładowania danych</div>
-        <div style="font-size:13px;color:var(--text2);margin-bottom:20px">Sprawdź połączenie z internetem i spróbuj ponownie.</div>
-        <button class="btn btn-primary" onclick="location.reload()"><i class="ti ti-refresh"></i> Odśwież</button>
-      </div>`;
+      if (isInitialLoad) {
+        const rv = $('rv');
+        if (rv) rv.innerHTML = `<div class="empty" style="padding:40px 20px;text-align:center">
+          <i class="ti ti-wifi-off" style="font-size:48px;color:var(--text3);display:block;margin-bottom:16px"></i>
+          <div style="font-size:15px;font-weight:700;color:var(--text);margin-bottom:8px">Błąd ładowania danych</div>
+          <div style="font-size:13px;color:var(--text2);margin-bottom:20px">Sprawdź połączenie z internetem i spróbuj ponownie.</div>
+          <button class="btn btn-primary" onclick="location.reload()"><i class="ti ti-refresh"></i> Odśwież</button>
+        </div>`;
+      }
       return;
     }
-
-    setupRealtime();
 
     const name = curClients[0]?.imie_nazwisko || curUser.email || '?';
     const initials = name.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
@@ -1268,13 +1294,18 @@ sb.auth.onAuthStateChange(async (event, session) => {
     $('userName').textContent = name.split(' ')[0];
 
     if (!curClients.length) {
-      showScreen('sPending');
-      $('pendingEmail').textContent = curUser.email;
+      if (isInitialLoad) {
+        showScreen('sPending');
+        $('pendingEmail').textContent = curUser.email;
+      }
       return;
     }
 
-    render();
-    checkIosBanner();
+    if (isInitialLoad) {
+      setupRealtime();
+      render();
+      checkIosBanner();
+    }
   } else {
     curUser=null; curClients=[]; allRequests=[]; teardownRealtime();
     if (!activationToken) showScreen('sLogin');
