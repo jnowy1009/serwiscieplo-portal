@@ -1,4 +1,4 @@
-const CACHE = 'portal-v1.0.0';
+const CACHE = 'portal-v1.2.0';
 const SHELL = ['/index.html', '/manifest.json', '/sw.js'];
 
 self.addEventListener('install', e => {

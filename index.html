@@ -606,6 +606,9 @@ async function doLogout() {
   closeModal('logoutOv');
   teardownRealtime();
   await sb.auth.signOut();
+  // Wyczyść cache Supabase z localStorage (zabezpieczenie przed stuck session)
+  Object.keys(localStorage).filter(k => k.startsWith('sb-')).forEach(k => localStorage.removeItem(k));
+  location.href = location.pathname;
 }
 
 /* ── ACTIVATION ──────────────────────────────────────── */
@@ -1282,8 +1285,15 @@ sb.auth.onAuthStateChange(async (event, session) => {
 (function init() {
   initTheme();
 
-  // Check for activation token in URL
+  // Force logout via URL: portal.serwiscieplo.pl?logout=1
   const urlParams = new URLSearchParams(location.search);
+  if (urlParams.get('logout')) {
+    Object.keys(localStorage).filter(k => k.startsWith('sb-')).forEach(k => localStorage.removeItem(k));
+    sb.auth.signOut().finally(() => { location.href = location.pathname; });
+    return;
+  }
+
+  // Check for activation token in URL
   activationToken = urlParams.get('token');
   if (activationToken) {
     showScreen('sActivate');
