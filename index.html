@@ -655,12 +655,16 @@ async function doActivate() {
 
 /* ── DATA ────────────────────────────────────────────── */
 async function loadData() {
-  const [{data:clients},{data:requests}] = await Promise.all([
-    sb.from('klienci').select('*, serwisy(data_serwisu,status)').eq('portal_user_id',curUser.id).order('imie_nazwisko'),
+  const [clientsRes, requestsRes] = await Promise.all([
+    sb.from('klienci').select('*, serwisy(data_serwisu)').eq('portal_user_id',curUser.id).order('imie_nazwisko'),
     sb.from('service_requests').select('*').eq('portal_user_id',curUser.id).order('created_at',{ascending:false}),
   ]);
-  curClients  = clients  || [];
-  allRequests = requests || [];
+  if (clientsRes.error) {
+    console.error('[loadData] klienci:', clientsRes.error);
+    throw new Error(clientsRes.error.message);
+  }
+  curClients  = clientsRes.data  || [];
+  allRequests = requestsRes.data || [];
 
   // Pobierz dane kontaktowe serwisanta przypisanego do klienta
   const techId = curClients[0]?.user_id;
