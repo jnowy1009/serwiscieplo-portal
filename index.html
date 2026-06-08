@@ -322,6 +322,16 @@ html,body{height:100%;font-family:-apple-system,'Segoe UI',Helvetica,sans-serif;
 .btn-pending{width:100%;padding:12px;background:rgba(255,255,255,.08);color:rgba(255,255,255,.7);border:1px solid rgba(255,255,255,.12);border-radius:var(--rs);font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;transition:background .15s}
 .btn-pending:hover{background:rgba(255,255,255,.14)}
 
+/* PDF VIEWER (raport) */
+.pdf-viewer-ov{display:none;position:fixed;inset:0;z-index:3000;flex-direction:column;background:#525659}
+.pdf-viewer-ov.on{display:flex}
+.pdf-viewer-bar{background:#1c1c1c;padding:10px 14px;display:flex;align-items:center;gap:8px;flex-shrink:0;min-height:54px;padding-top:calc(10px + env(safe-area-inset-top,0px))}
+.pdf-viewer-title{color:#fff;font-size:14px;font-weight:700;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pdf-bar-btn{background:rgba(255,255,255,.15);border:none;color:#fff;border-radius:8px;padding:9px 14px;font-size:13px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;font-family:inherit;font-weight:600;white-space:nowrap}
+.pdf-bar-btn:hover{background:rgba(255,255,255,.28)}
+.pdf-bar-btn.close{background:rgba(239,68,68,.4)}
+.pdf-frame{flex:1;width:100%;border:none;background:#fff}
+
 /* FOOTER VERSION */
 .ver{text-align:center;padding:16px 0;font-size:11px;color:var(--text3)}
 </style>
@@ -479,6 +489,16 @@ html,body{height:100%;font-family:-apple-system,'Segoe UI',Helvetica,sans-serif;
   </div>
 </div>
 
+<!-- PDF VIEWER (raport serwisowy) -->
+<div class="pdf-viewer-ov" id="pdfViewerOv">
+  <div class="pdf-viewer-bar">
+    <span class="pdf-viewer-title"><i class="ti ti-file-type-pdf"></i> Raport serwisowy</span>
+    <button class="pdf-bar-btn" onclick="printReportPdf()"><i class="ti ti-printer"></i> Drukuj / PDF</button>
+    <button class="pdf-bar-btn close" onclick="closeReportPdf()"><i class="ti ti-x"></i></button>
+  </div>
+  <iframe class="pdf-frame" id="pdfFrame"></iframe>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -488,7 +508,7 @@ html,body{height:100%;font-family:-apple-system,'Segoe UI',Helvetica,sans-serif;
 const SB_URL = 'https://dzekzfxhqxiifuaesjum.supabase.co';
 const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR6ZWt6ZnhocXhpaWZ1YWVzanVtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg2MDY3ODEsImV4cCI6MjA5NDE4Mjc4MX0.SUFa62jSD0pThTtyN1n7eUKWRtPD42v4JP5vRNPf9fA';
 const sb = supabase.createClient(SB_URL, SB_KEY);
-const V = 'v2.1.1';
+const V = 'v2.2.0';
 
 /* Dane kontaktowe serwisanta — dostosuj do swoich */
 let SERWISANT_NAME  = 'SerwisCiepło';
@@ -778,6 +798,7 @@ function render() {
   if (hash.startsWith('/klient/'))           return renderKlientDetail(hash.split('/')[2]);
   if (hash.startsWith('/request/new'))       return renderNewRequest();
   if (hash.startsWith('/request/'))          return renderRequestDetail(hash.replace(/\?.*$/,'').split('/')[2]);
+  if (hash === '/raport')                    return renderReport();
   // fallback
   renderDashboard();
 }
@@ -831,6 +852,7 @@ function renderDashboard() {
         <div class="sec-title">Dzień dobry${curClients[0]?.imie_nazwisko ? ', '+esc(curClients[0].imie_nazwisko.split(' ')[0]) : ''}</div>
         <div class="sec-sub">${curClients.length === 1 ? 'Twój obiekt' : `${curClients.length} obiekty`}</div>
       </div>
+      <button class="btn btn-sm btn-outline" onclick="navigateTo('/raport')"><i class="ti ti-file-text"></i> Raport</button>
     </div>
     ${cardsHtml}
     <div class="ver">${V} · portal.serwiscieplo.pl</div>`;
@@ -1278,6 +1300,10 @@ function renderProfile() {
       <div class="auth-ok" id="transferOk" style="margin-top:8px"></div>
     </div>
 
+    <button class="btn btn-full btn-outline" style="margin-bottom:12px" onclick="navigateTo('/raport')">
+      <i class="ti ti-file-text"></i> Raport serwisowy (PDF)
+    </button>
+
     <button class="btn btn-full" style="background:var(--red-light);color:var(--red);border:1px solid var(--red-border);margin-bottom:16px" onclick="openModal('logoutOv')">
       <i class="ti ti-logout"></i> Wyloguj się
     </button>
@@ -1301,6 +1327,134 @@ async function applyTransferCode() {
   ok.textContent = 'Serwisant zmieniony! Strona zostanie odświeżona.';
   ok.classList.add('show');
   setTimeout(() => location.reload(), 2000);
+}
+
+/* ── VIEW: RAPORT SERWISOWY ──────────────────────────── */
+let _reportData = null;
+
+async function renderReport() {
+  $('rv').innerHTML = '<div class="loader-wrap"><div class="loader"></div></div>';
+  const ids = curClients.map(c => c.id);
+  let serwisy = [];
+  if (ids.length) {
+    const { data } = await sb.from('serwisy').select('*').in('klient_id', ids).order('data_serwisu', { ascending: false });
+    serwisy = data || [];
+  }
+  _reportData = { clients: curClients, serwisy };
+
+  const objectsHtml = curClients.map(c => {
+    const svc = serwisy.filter(s => s.klient_id === c.id);
+    const days = daysUntil(c.nastepny_przeglad);
+    const svcRows = svc.length
+      ? svc.map(s => `<div class="svc-item${s.status==='w_realizacji'?' wip':''}">
+          <div class="svc-meta">
+            <div class="svc-date-row"><i class="ti ti-calendar"></i>${formatDate(s.data_serwisu)}</div>
+            <span class="svc-badge ${s.status==='w_realizacji'?'wip':'done'}">${s.status==='w_realizacji'?'W realizacji':'Zakończony'}</span>
+          </div>
+          <div class="svc-desc">${esc(s.opis||'—')}</div>
+        </div>`).join('')
+      : '<div style="font-size:13px;color:var(--text3);padding:6px 0">Brak historii serwisów.</div>';
+    return `<div class="card">
+      <div class="card-hdr"><i class="ti ti-flame"></i> ${esc(c.imie_nazwisko||'Obiekt')}</div>
+      <div class="fields-grid" style="margin-bottom:14px">
+        ${c.adres?`<div class="field field-full"><label>Adres</label><span>${esc(c.adres)}</span></div>`:''}
+        ${c.kociol?`<div class="field"><label>Kocioł</label><span>${esc(c.kociol)}</span></div>`:''}
+        ${c.nr_seryjny?`<div class="field"><label>Nr seryjny</label><span>${esc(c.nr_seryjny)}</span></div>`:''}
+        ${c.data_instalacji?`<div class="field"><label>Data instalacji</label><span>${formatDate(c.data_instalacji)}</span></div>`:''}
+        ${c.nastepny_przeglad?`<div class="field"><label>Następny przegląd</label><span>${formatDate(c.nastepny_przeglad)}${days!==null?(days<0?` (${Math.abs(days)} dni po terminie)`:` (za ${days} dni)`):''}</span></div>`:''}
+        ${c.sw_wyswietlacz?`<div class="field"><label>Oprog. wyświetlacza</label><span>${esc(c.sw_wyswietlacz)}</span></div>`:''}
+        ${c.sw_modul?`<div class="field"><label>Oprog. modułu</label><span>${esc(c.sw_modul)}</span></div>`:''}
+      </div>
+      <div class="card-hdr" style="margin-top:4px"><i class="ti ti-history"></i> Historia serwisów (${svc.length})</div>
+      ${svcRows}
+    </div>`;
+  }).join('');
+
+  $('rv').innerHTML = `
+    <div class="sec-hdr">
+      <div><div class="sec-title">Raport serwisowy</div>
+      <div class="sec-sub">Pełny przegląd Twoich instalacji i historii</div></div>
+    </div>
+    <div style="margin-bottom:14px">
+      <button class="btn btn-primary btn-full" onclick="openReportPdf()"><i class="ti ti-file-type-pdf"></i> Pobierz / drukuj PDF</button>
+    </div>
+    ${objectsHtml || '<div class="empty"><i class="ti ti-file-off"></i><p>Brak danych do raportu.</p></div>'}
+    <div class="ver">${V} · portal.serwiscieplo.pl</div>`;
+}
+
+function buildReportHTML() {
+  const { clients, serwisy } = _reportData || { clients: curClients, serwisy: [] };
+  const today = new Date().toLocaleDateString('pl-PL', { year:'numeric', month:'long', day:'numeric' });
+  const clientName = clients[0]?.imie_nazwisko || curUser?.email || '';
+  const objects = clients.map(c => {
+    const svc = serwisy.filter(s => s.klient_id === c.id);
+    const rows = svc.length
+      ? svc.map(s => `<div class="svc-row"><div class="svc-date">${formatDate(s.data_serwisu)}${s.status==='w_realizacji'?' — w realizacji':''}</div><div class="svc-desc">${esc(s.opis||'—')}</div></div>`).join('')
+      : '<p style="color:#a8a29e;font-size:13px;padding:6px 0">Brak historii serwisów.</p>';
+    return `<div class="obj">
+      <h3>${esc(c.imie_nazwisko||'Obiekt')}</h3>
+      <div class="info-grid">
+        ${c.adres?`<div class="f full"><label>Adres</label><span>${esc(c.adres)}</span></div>`:''}
+        ${c.kociol?`<div class="f"><label>Kocioł</label><span>${esc(c.kociol)}</span></div>`:''}
+        ${c.nr_seryjny?`<div class="f"><label>Nr seryjny</label><span>${esc(c.nr_seryjny)}</span></div>`:''}
+        ${c.data_instalacji?`<div class="f"><label>Data instalacji</label><span>${formatDate(c.data_instalacji)}</span></div>`:''}
+        ${c.nastepny_przeglad?`<div class="f"><label>Następny przegląd</label><span>${formatDate(c.nastepny_przeglad)}</span></div>`:''}
+        ${c.sw_wyswietlacz?`<div class="f"><label>Oprog. wyświetlacza</label><span>${esc(c.sw_wyswietlacz)}</span></div>`:''}
+        ${c.sw_modul?`<div class="f"><label>Oprog. modułu</label><span>${esc(c.sw_modul)}</span></div>`:''}
+      </div>
+      <div class="sec-title2">Historia serwisów (${svc.length})</div>
+      ${rows}
+    </div>`;
+  }).join('');
+
+  return `<!DOCTYPE html><html lang="pl"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Raport serwisowy — ${esc(clientName)}</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Arial,Helvetica,sans-serif;padding:24px 20px;color:#1c1917;font-size:14px;max-width:760px;margin:0 auto}
+.header{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid #c2410c;padding-bottom:14px;margin-bottom:18px;gap:12px}
+.logo{font-size:20px;font-weight:800;color:#c2410c;white-space:nowrap}
+.logo span{color:#1c1917}
+.date{font-size:11px;color:#78716c;text-align:right;line-height:1.5}
+h2{font-size:18px;margin-bottom:2px}
+.subtitle{color:#78716c;font-size:13px;margin-bottom:18px}
+.obj{border:1px solid #ede9e3;border-radius:8px;padding:16px;margin-bottom:16px;page-break-inside:avoid}
+.obj h3{font-size:15px;color:#c2410c;margin-bottom:10px}
+.info-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px 20px;background:#f7f4f0;padding:12px;border-radius:6px;margin-bottom:12px}
+.f label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#a8a29e;display:block;margin-bottom:2px}
+.f span{font-size:13px;font-weight:600}
+.f.full{grid-column:1/-1}
+.sec-title2{font-size:12px;font-weight:700;margin:10px 0 8px;padding-bottom:4px;border-bottom:1px solid #ede9e3;text-transform:uppercase;letter-spacing:.04em;color:#78716c}
+.svc-row{padding:8px 12px;border-left:3px solid #c2410c;margin-bottom:6px;background:#fff7ed;border-radius:0 6px 6px 0}
+.svc-date{font-size:11px;color:#78716c;margin-bottom:3px;font-weight:600}
+.svc-desc{font-size:13px;line-height:1.5}
+.footer{margin-top:24px;padding-top:10px;border-top:1px solid #ede9e3;font-size:11px;color:#a8a29e;text-align:center;line-height:1.6}
+@media(max-width:480px){.info-grid{grid-template-columns:1fr}.header{flex-direction:column}}
+@media print{body{padding:12px}.obj{page-break-inside:avoid}}
+</style></head><body>
+<div class="header">
+  <div class="logo">🔥 Serwis<span>Ciepło</span></div>
+  <div class="date">Raport wygenerowany: ${today}<br>Klient: ${esc(clientName)}</div>
+</div>
+<h2>Raport serwisowy</h2>
+<div class="subtitle">Instalacje, historia serwisów i terminy przeglądów</div>
+${objects || '<p style="color:#a8a29e">Brak danych.</p>'}
+<div class="footer">SerwisCiepło — Portal klienta<br>Serwisant: ${esc(SERWISANT_NAME)} · ${esc(SERWISANT_PHONE)}</div>
+</body></html>`;
+}
+
+function openReportPdf() {
+  $('pdfFrame').srcdoc = buildReportHTML();
+  $('pdfViewerOv').classList.add('on');
+  document.body.style.overflow = 'hidden';
+}
+function printReportPdf() {
+  const frame = $('pdfFrame');
+  try { frame.contentWindow.focus(); frame.contentWindow.print(); }
+  catch(e) { showToast('Użyj menu przeglądarki, aby wydrukować lub zapisać PDF'); }
+}
+function closeReportPdf() {
+  $('pdfViewerOv').classList.remove('on');
+  document.body.style.overflow = '';
 }
 
 /* ── MODALS ──────────────────────────────────────────── */
