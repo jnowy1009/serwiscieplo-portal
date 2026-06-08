@@ -1070,12 +1070,30 @@ async function cancelRequest(reqId) {
   } else showToast('Błąd: '+error.message);
 }
 
+// Powiadom technika (push + ewentualny wpis w kalendarzu) o decyzji klienta. Best-effort.
+async function notifyTechUpdate(reqId, action, message) {
+  try {
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session) return;
+    await fetch(`${SB_URL}/functions/v1/notify-technician-request-update`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'apikey': SB_KEY, 'Authorization': `Bearer ${session.access_token}` },
+      body: JSON.stringify({ request_id: reqId, action, message: message || null }),
+    });
+  } catch (e) { console.warn('[notifyTechUpdate]', e); }
+}
+
 async function confirmSchedule(reqId) {
   localUpdateIds.add(reqId);
   const {error} = await sb.from('service_requests')
     .update({client_confirmed_at: new Date().toISOString()})
     .eq('id', reqId);
-  if (!error) { showToast('Termin potwierdzony.'); allRequests=allRequests.map(r=>r.id===reqId?{...r,client_confirmed_at:new Date().toISOString()}:r); render(); }
+  if (!error) {
+    showToast('Termin potwierdzony.');
+    allRequests=allRequests.map(r=>r.id===reqId?{...r,client_confirmed_at:new Date().toISOString()}:r);
+    render();
+    notifyTechUpdate(reqId, 'confirmed');
+  }
   else showToast('Błąd: '+error.message);
 }
 
@@ -1084,9 +1102,14 @@ async function requestReschedule(reqId) {
   if (!note?.trim()) return;
   localUpdateIds.add(reqId);
   const {error} = await sb.from('service_requests')
-    .update({status:'in_progress', technician_note:note, scheduled_date:null, client_confirmed_at:null})
+    .update({status:'in_progress', technician_note:note, scheduled_by:'client', scheduled_date:null, client_confirmed_at:null})
     .eq('id', reqId);
-  if (!error) { showToast('Prośba o zmianę terminu wysłana.'); allRequests=allRequests.map(r=>r.id===reqId?{...r,status:'in_progress',technician_note:note,scheduled_date:null}:r); render(); }
+  if (!error) {
+    showToast('Prośba o zmianę terminu wysłana.');
+    allRequests=allRequests.map(r=>r.id===reqId?{...r,status:'in_progress',technician_note:note,scheduled_by:'client',scheduled_date:null}:r);
+    render();
+    notifyTechUpdate(reqId, 'reschedule', note);
+  }
   else showToast('Błąd: '+error.message);
 }
 
