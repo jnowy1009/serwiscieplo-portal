@@ -50,21 +50,25 @@ serve(async (req) => {
       if (upErr) throw upErr
       userId = existing.id
     } else {
-      // Utwórz nowego użytkownika
+      // Utwórz nowego użytkownika.
+      // account_type='portal_client' → trigger handle_new_user nada od razu rolę
+      // 'portal_client' (zamiast 'pending'), więc NIE odpala powiadomienia serwisanckiego.
       const { data: created, error: createErr } = await supa.auth.admin.createUser({
         email: inv.email,
         password,
         email_confirm: true,
+        user_metadata: { account_type: 'portal_client' },
       })
       if (createErr || !created.user) throw createErr ?? new Error('Błąd tworzenia konta')
       userId = created.user.id
     }
 
-    // Dodaj / zaktualizuj rolę portal_client
-    await supa.from('user_roles').upsert(
+    // Dodaj / zaktualizuj rolę portal_client (zabezpieczenie — gdyby trigger nie zadziałał).
+    const { error: roleErr } = await supa.from('user_roles').upsert(
       { user_id: userId, role: 'portal_client' },
       { onConflict: 'user_id' }
     )
+    if (roleErr) console.error('[handle-portal-auth] user_roles upsert:', roleErr)
 
     // Powiąż z rekordem klienta
     const { error: linkErr } = await supa
