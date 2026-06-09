@@ -1,9 +1,14 @@
 // ─────────────────────────────────────────────────────────────────────────
 // Edge Function: notify-technician-request-update
 // Wywoływana przez PORTAL gdy klient reaguje na propozycję terminu:
-//   action='confirmed'  → klient potwierdził termin  → push + auto-wpis w kalendarzu technika
+//   action='confirmed'  → klient potwierdził termin  → push do technika
 //   action='reschedule' → klient prosi o inny termin → push z wiadomością klienta
 // Push leci na urządzenia technika (push_subscriptions). VAPID — te same sekrety co send-reminders.
+//
+// UWAGA: wpis w kalendarzu technika tworzy TRIGGER DB (sync_visit_to_calendar)
+// w tej samej transakcji co potwierdzenie — niezawodnie, niezależnie od tej
+// funkcji. Tu robimy WYŁĄCZNIE push, by powiadomienie szło jak najszybciej
+// (bez czekania na zapytania do bazy o kalendarz — to była przyczyna opóźnień).
 // ─────────────────────────────────────────────────────────────────────────
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
@@ -45,34 +50,6 @@ async function sendPushToTechnician(supa: any, techId: string, payload: unknown)
   return sent
 }
 
-// Tworzy wpis w kalendarzu technika dla potwierdzonej wizyty (bez duplikatów).
-async function addCalendarEvent(supa: any, techId: string, sr: any, klientName: string): Promise<boolean> {
-  if (!sr.scheduled_date) return false
-  const d = new Date(sr.scheduled_date)
-  const data = d.toLocaleDateString('en-CA', { timeZone: 'Europe/Warsaw' })          // YYYY-MM-DD
-  const godzina = d.toLocaleTimeString('en-GB', { timeZone: 'Europe/Warsaw', hour: '2-digit', minute: '2-digit' }) // HH:MM
-  // Guard: nie duplikuj jeśli wizyta tego klienta na ten dzień już jest w kalendarzu.
-  const { data: existing } = await supa
-    .from('wydarzenia')
-    .select('id')
-    .eq('user_id', techId)
-    .eq('klient_id', sr.klient_id)
-    .eq('data', data)
-    .limit(1)
-  if (existing?.length) return false
-  const { error } = await supa.from('wydarzenia').insert({
-    user_id: techId,
-    klient_id: sr.klient_id,
-    tytul: `Wizyta: ${klientName}`,
-    data,
-    godzina,
-    typ: 'wizyta',
-    opis: sr.description ? `Zgłoszenie: ${String(sr.description).slice(0, 200)}` : null,
-  })
-  if (error) { console.error('[kalendarz]', error.message); return false }
-  return true
-}
-
 serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: CORS })
   try {
@@ -103,13 +80,11 @@ serve(async (req) => {
 
     const url = `./?klient=${sr.klient_id}&req=${sr.id}`
     let pushSent = 0
-    let calendarAdded = false
 
     if (action === 'confirmed') {
       const dateLabel = sr.scheduled_date
         ? new Date(sr.scheduled_date).toLocaleString('pl-PL', { timeZone: 'Europe/Warsaw', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' })
         : ''
-      calendarAdded = await addCalendarEvent(supa, techId, sr, klient.imie_nazwisko)
       pushSent = await sendPushToTechnician(supa, techId, {
         title: '✅ Klient potwierdził wizytę',
         body: `${klient.imie_nazwisko}${dateLabel ? ' — ' + dateLabel : ''}`,
@@ -129,7 +104,7 @@ serve(async (req) => {
       throw new Error('Nieznana akcja: ' + action)
     }
 
-    return new Response(JSON.stringify({ success: true, pushSent, calendarAdded }), {
+    return new Response(JSON.stringify({ success: true, pushSent }), {
       headers: { ...CORS, 'Content-Type': 'application/json' },
     })
   } catch (err) {
