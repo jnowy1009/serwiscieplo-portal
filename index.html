@@ -1615,10 +1615,17 @@ function renderCompany() {
         <button class="btn btn-sm btn-primary" onclick="toggleNewZlecenie()"><i class="ti ti-${showNewZlecenie?'x':'plus'}"></i> ${showNewZlecenie?'Anuluj':'Nowe'}</button>
       </div>
       ${showNewZlecenie ? `<div style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--rs);padding:14px;margin-bottom:14px">
-        <div class="form-group" style="margin-bottom:10px"><label>Tytuł *</label><input type="text" id="nzTytul" placeholder="np. Przegląd kotła — ul. Lipowa 5"></div>
-        <div class="form-group" style="margin-bottom:10px"><label>Opis</label><textarea id="nzOpis" style="min-height:60px" placeholder="Szczegóły zlecenia…"></textarea></div>
+        <div class="form-group" style="margin-bottom:10px"><label>Tytuł *</label><input type="text" id="nzTytul" placeholder="np. Przegląd kotła gazowego"></div>
+        <div class="form-group" style="margin-bottom:10px"><label>Opis</label><textarea id="nzOpis" style="min-height:60px" placeholder="Szczegóły zlecenia, zakres prac…"></textarea></div>
+        <div style="font-size:12px;font-weight:700;color:var(--text2);margin:14px 0 8px;text-transform:uppercase;letter-spacing:.04em"><i class="ti ti-user-pin"></i> Klient do odwiedzenia</div>
+        <div class="form-group" style="margin-bottom:10px"><label>Imię i nazwisko *</label><input type="text" id="nzKlImie" placeholder="np. Jan Kowalski"></div>
+        <div class="form-group" style="margin-bottom:10px"><label>Adres *</label><input type="text" id="nzKlAdres" placeholder="ul. Lipowa 5, 00-000 Miasto"></div>
+        <div class="form-group" style="margin-bottom:10px"><label>Telefon *</label><input type="tel" id="nzKlTel" inputmode="tel" placeholder="+48 600 000 000"></div>
+        <div class="form-group" style="margin-bottom:10px"><label>E-mail (opcjonalnie)</label><input type="email" id="nzKlEmail" autocapitalize="none" placeholder="klient@example.com"></div>
+        <div style="height:1px;background:var(--border);margin:14px 0"></div>
         <div class="form-group" style="margin-bottom:10px"><label>Przypisz serwisanta</label><select id="nzSerw"><option value="">— nieprzypisane —</option>${opts}</select></div>
         <div class="form-group" style="margin-bottom:12px"><label>Priorytet</label><select id="nzPrio"><option value="normal">Zwykłe</option><option value="urgent">Pilne</option></select></div>
+        <div id="nzErr" style="color:var(--red);font-size:12.5px;margin-bottom:10px;display:none"></div>
         <button class="btn btn-primary btn-full" onclick="createZlecenie()"><i class="ti ti-check"></i> Utwórz zlecenie</button>
       </div>` : ''}
       ${zlecHtml}
@@ -1639,6 +1646,12 @@ function companyZlecenieCard(z, activeSerw) {
       <span class="tag ${stCls[z.status]}">${stLabels[z.status]}</span>
     </div>
     ${z.opis ? `<div class="req-desc">${esc(z.opis)}</div>` : ''}
+    ${z.klient_imie ? `<div style="background:var(--surface2);border-radius:var(--rs);padding:8px 10px;margin-top:8px;font-size:12.5px;line-height:1.6">
+      <div style="font-weight:700"><i class="ti ti-user"></i> ${esc(z.klient_imie)}</div>
+      ${z.klient_adres ? `<div style="color:var(--text2)"><i class="ti ti-map-pin" style="width:14px"></i> ${esc(z.klient_adres)}</div>` : ''}
+      ${z.klient_telefon ? `<div style="color:var(--text2)"><i class="ti ti-phone" style="width:14px"></i> ${esc(z.klient_telefon)}</div>` : ''}
+      ${z.klient_email ? `<div style="color:var(--text2)"><i class="ti ti-mail" style="width:14px"></i> ${esc(z.klient_email)}</div>` : ''}
+    </div>` : ''}
     <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">
       <select onchange="assignZlecenie('${z.id}',this.value)" style="flex:1;min-width:130px;padding:6px 8px;border:1px solid var(--border2);border-radius:var(--rs);font-size:12px;background:var(--surface);color:var(--text2);font-family:inherit;cursor:pointer">${opts}</select>
       <select onchange="updateCompanyZlecenieStatus('${z.id}',this.value)" style="flex:1;min-width:110px;padding:6px 8px;border:1px solid var(--border2);border-radius:var(--rs);font-size:12px;background:var(--surface);color:var(--text2);font-family:inherit;cursor:pointer">
@@ -1666,16 +1679,27 @@ function toggleNewZlecenie() { showNewZlecenie = !showNewZlecenie; renderCompany
 
 async function createZlecenie() {
   const tytul = $('nzTytul').value.trim();
-  if (!tytul) { showToast('Podaj tytuł zlecenia.'); return; }
+  const klImie = $('nzKlImie').value.trim();
+  const klAdres = $('nzKlAdres').value.trim();
+  const klTel = $('nzKlTel').value.trim();
+  const klEmail = $('nzKlEmail').value.trim();
+  const err = $('nzErr');
+  const showErr = m => { err.textContent = m; err.style.display = 'block'; };
+  err.style.display = 'none';
+  if (!tytul) return showErr('Podaj tytuł zlecenia.');
+  if (!klImie) return showErr('Podaj imię i nazwisko klienta.');
+  if (!klAdres) return showErr('Podaj adres klienta — serwisant musi wiedzieć, gdzie jechać.');
+  if (!klTel) return showErr('Podaj telefon do klienta.');
   const serw = $('nzSerw').value || null;
   const { error } = await sb.from('zlecenia').insert({
     firma_id: curFirma.id, tytul,
     opis: $('nzOpis').value.trim() || null,
+    klient_imie: klImie, klient_adres: klAdres, klient_telefon: klTel, klient_email: klEmail || null,
     serwisant_user_id: serw,
     status: serw ? 'assigned' : 'new',
     priorytet: $('nzPrio').value,
   });
-  if (error) { showToast('Błąd: ' + error.message); return; }
+  if (error) { showErr('Błąd: ' + error.message); return; }
   showNewZlecenie = false;
   showToast('Zlecenie utworzone.');
   await loadCompanyData(); renderCompany();
