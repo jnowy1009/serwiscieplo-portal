@@ -84,11 +84,18 @@ Legenda: **O** = odczyt (SELECT), **Z** = zapis (INSERT/UPDATE/DELETE), **—** 
 - **`serwisanci`** — właściciel: ALL gdzie `user_id = auth.uid()`; każdy zalogowany: SELECT (portal czyta dane kontaktowe technika).
 - **`service_requests`** — klient: ALL gdzie `portal_user_id = auth.uid()` (składa, anuluje, potwierdza/odrzuca termin); technik: ALL gdzie `technician_id = auth.uid()` **lub** `klient_id` należy do jego klientów (zmienia status, ustawia termin wizyty). Portal nasłuchuje tej tabeli przez Supabase Realtime.
 
+### Panel firmowy (Zadanie 3) — tabele współdzielone
+- **`firmy`** — konta firm (np. Defro). Zakłada **admin** w panelu (edge `admin-create-company`); firma loguje się w portalu (rola `company` → panel firmowy). RLS: właściciel (`owner_user_id = auth.uid()`) ALL; admin przez RPC `get_all_firmy`. Migracja: `migrations/002_company_schema.sql`.
+- **`firma_serwisanci`** — członkostwo serwisant↔firma (`invited`/`active`/`removed`). Firma zaprasza po e-mailu (RPC `invite_serwisant_to_firma`), serwisant akceptuje w panelu (RPC `respond_firma_invitation`, podgląd `get_my_firma_invitations`). RLS: firma ALL po swoim `firma_id`; serwisant SELECT/UPDATE swoich.
+- **`zlecenia`** — zlecenia firmowe (firma tworzy/przypisuje; serwisant zmienia status). RLS: firma ALL po `firma_id`; serwisant SELECT/UPDATE gdzie `serwisant_user_id = auth.uid()`. Portal (firma) nasłuchuje przez Realtime.
+- Rola **`company`** w `user_roles`; `handle_new_user` nadaje ją gdy `account_type='company'`. Z5 (admin panelu): RPC `get_all_portal_clients`, `admin_set_client_blocked`, `admin_delete_client`, `get_admin_stats_v2`.
+
 ### Edge Functions i triggery (wspólny backend)
 - `claude-proxy` (panel) — proxy do asystenta AI (Anthropic Claude Haiku).
 - `send-reminders` (panel) — przypomnienia o przeglądach.
 - `send-portal-invitation` (źródło w repo portalu, **wywoływana przez panel**) — wysyła e-mail z linkiem aktywacyjnym (token) przez Resend.
-- `handle-portal-auth` (portal) — aktywuje konto klienta z tokenu, ustawia `klienci.portal_user_id`.
+- `admin-create-company` (źródło w repo portalu, **wywoływana przez panel admina**) — tworzy konto auth firmy + rolę `company` + wpis w `firmy` (service_role, `verify_jwt=true`).
+- `handle-portal-auth` (portal) — aktywuje konto klienta z tokenu, ustawia `klienci.portal_user_id` (przekazuje `account_type='portal_client'`).
 - `notify-technician-new-request` (portal) — wyzwalana triggerem DB `SERWIS-REQUESTS` na INSERT do `service_requests` → e-mail do technika (Resend).
 
 ### Strony portalu klienta i operacje na danych

@@ -508,7 +508,7 @@ html,body{height:100%;font-family:-apple-system,'Segoe UI',Helvetica,sans-serif;
 const SB_URL = 'https://dzekzfxhqxiifuaesjum.supabase.co';
 const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR6ZWt6ZnhocXhpaWZ1YWVzanVtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg2MDY3ODEsImV4cCI6MjA5NDE4Mjc4MX0.SUFa62jSD0pThTtyN1n7eUKWRtPD42v4JP5vRNPf9fA';
 const sb = supabase.createClient(SB_URL, SB_KEY);
-const V = 'v2.2.0';
+const V = 'v2.3.0';
 
 /* Dane kontaktowe serwisanta — dostosuj do swoich */
 let SERWISANT_NAME  = 'SerwisCiepło';
@@ -524,6 +524,14 @@ let rtChannel   = null;
 let activationToken = null;
 // ID zgłoszeń zmienionych lokalnie — by echo realtime nie pokazało mylącego toastu „Serwisant zaktualizował…".
 const localUpdateIds = new Set();
+
+// ── PANEL FIRMOWY (Zadanie 3) ──
+let companyMode      = false;
+let curFirma         = null;
+let firmaSerwisanci  = [];
+let firmaZlecenia    = [];
+let companyRtChannel = null;
+let showNewZlecenie  = false;
 
 /* ── HELPERS ─────────────────────────────────────────── */
 const esc = s => String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
@@ -742,6 +750,7 @@ function setupRealtime() {
 }
 function teardownRealtime() {
   if (rtChannel) { sb.removeChannel(rtChannel); rtChannel=null; }
+  if (companyRtChannel) { sb.removeChannel(companyRtChannel); companyRtChannel=null; }
 }
 function handleRealtimeChange(payload) {
   // Update local state
@@ -774,6 +783,7 @@ window.addEventListener('hashchange', render);
 
 function render() {
   if (!curUser || !($('sApp').classList.contains('on'))) return;
+  if (companyMode) return renderCompany();   // firma ma własny panel (poza routerem klienta)
   const hash = decodeURIComponent(location.hash.replace('#','') || '/dashboard');
 
   // Bottom nav
@@ -1475,6 +1485,12 @@ async function bootstrapApp() {
     if (rv && !appReady) rv.innerHTML = '<div class="loader-wrap"><div class="loader"></div></div>';
     showScreen('sApp');
 
+    // Wykryj rolę: firma → panel firmowy, blocked → ekran blokady, inaczej → klient.
+    let _role = null;
+    try { const { data } = await sb.rpc('login_user'); _role = data; } catch(e) { /* brak roli = klient */ }
+    if (_role === 'blocked')  { appReady = true; renderBlocked(); return; }
+    if (_role === 'company')  { appReady = true; companyMode = true; await bootstrapCompany(); return; }
+
     try {
       await loadData();
     } catch(err) {
@@ -1506,6 +1522,177 @@ async function bootstrapApp() {
   } finally {
     bootstrapping = false;
   }
+}
+
+/* ── PANEL FIRMOWY (Zadanie 3) ───────────────────────── */
+function renderBlocked() {
+  const bn = document.querySelector('.bnav'); if (bn) bn.style.display = 'none';
+  $('rv').innerHTML = `<div class="empty" style="padding:48px 20px">
+    <i class="ti ti-lock" style="font-size:48px;color:var(--red)"></i>
+    <p style="font-size:15px;font-weight:700;color:var(--text);margin:12px 0 6px">Konto zablokowane</p>
+    <p style="font-size:13px">Twoje konto zostało zablokowane przez administratora. Skontaktuj się z serwisem.</p>
+    <button class="btn btn-primary" style="margin-top:18px" onclick="doLogout()"><i class="ti ti-logout"></i> Wyloguj</button>
+  </div>`;
+}
+
+async function loadCompanyData() {
+  const [firmyRes, serwRes, zlecRes] = await Promise.all([
+    sb.from('firmy').select('*').eq('owner_user_id', curUser.id).limit(1),
+    sb.rpc('get_firma_serwisanci'),
+    sb.from('zlecenia').select('*').order('created_at', { ascending: false }),
+  ]);
+  curFirma        = (firmyRes.data && firmyRes.data[0]) || null;
+  firmaSerwisanci = serwRes.data || [];
+  firmaZlecenia   = zlecRes.data || [];
+}
+
+async function bootstrapCompany() {
+  const bn = document.querySelector('.bnav'); if (bn) bn.style.display = 'none';
+  $('rv').innerHTML = '<div class="loader-wrap"><div class="loader"></div></div>';
+  try {
+    await loadCompanyData();
+  } catch(e) {
+    console.error('[bootstrapCompany]', e);
+    $('rv').innerHTML = `<div class="empty" style="padding:40px 20px"><i class="ti ti-wifi-off" style="font-size:46px;color:var(--text3)"></i><p>Błąd ładowania danych firmy.</p><button class="btn btn-primary" style="margin-top:14px" onclick="location.reload()"><i class="ti ti-refresh"></i> Odśwież</button></div>`;
+    return;
+  }
+  const nm = curFirma?.nazwa || curUser.email || 'Firma';
+  $('userAv').textContent = (nm[0] || 'F').toUpperCase();
+  $('userName').textContent = nm.split(' ')[0];
+  setupCompanyRealtime();
+  renderCompany();
+  checkIosBanner();
+}
+
+function setupCompanyRealtime() {
+  if (!curFirma) return;
+  companyRtChannel = sb.channel('company_rt_' + curFirma.id)
+    .on('postgres_changes', { event:'*', schema:'public', table:'zlecenia', filter:'firma_id=eq.'+curFirma.id },
+      async () => { await loadCompanyData(); renderCompany(); })
+    .subscribe();
+}
+
+function renderCompany() {
+  $('backBtn').style.display = 'none';
+  $('topLogo').style.display = '';
+  const activeSerw  = firmaSerwisanci.filter(s => s.status === 'active');
+  const activeZ     = firmaZlecenia.filter(z => !['completed','cancelled'].includes(z.status)).length;
+
+  const serwHtml = firmaSerwisanci.length ? firmaSerwisanci.map(s => `
+    <div class="contact-row">
+      <div class="contact-ico ${s.status === 'active' ? 'g' : 'o'}"><i class="ti ti-user"></i></div>
+      <div style="flex:1;min-width:0">
+        <div class="contact-val">${esc(s.full_name || s.email || '—')}</div>
+        <div class="contact-lbl" style="text-transform:none">${esc(s.email || '')}</div>
+      </div>
+      <span class="tag ${s.status === 'active' ? 'tag-ok' : 'tag-warn'}">${s.status === 'active' ? 'Aktywny' : 'Zaproszony'}</span>
+    </div>`).join('') : '<div style="font-size:13px;color:var(--text3);padding:8px 0">Brak serwisantów. Zaproś pierwszego po e-mailu.</div>';
+
+  const opts = activeSerw.map(s => `<option value="${s.serwisant_user_id}">${esc(s.full_name || s.email)}</option>`).join('');
+  const zlecHtml = firmaZlecenia.length ? firmaZlecenia.map(z => companyZlecenieCard(z, activeSerw)).join('')
+    : '<div style="font-size:13px;color:var(--text3);padding:8px 0">Brak zleceń. Utwórz pierwsze.</div>';
+
+  $('rv').innerHTML = `
+    <div class="sec-hdr"><div>
+      <div class="sec-title">${esc(curFirma?.nazwa || 'Panel firmy')}</div>
+      <div class="sec-sub">Panel firmowy · ${activeSerw.length} serwisant${activeSerw.length===1?'':'ów'} · ${activeZ} aktywnych zleceń</div>
+    </div></div>
+
+    <div class="card">
+      <div class="card-hdr"><i class="ti ti-users"></i> Serwisanci</div>
+      ${serwHtml}
+      <div style="display:flex;gap:8px;margin-top:14px">
+        <input type="email" id="inviteEmail" placeholder="email serwisanta" autocapitalize="none" style="flex:1;min-width:0;padding:10px 12px;border:1.5px solid var(--border2);border-radius:var(--rs);font-size:14px;background:var(--surface2);color:var(--text);font-family:inherit">
+        <button class="btn btn-primary" onclick="inviteSerwisant()"><i class="ti ti-user-plus"></i> Zaproś</button>
+      </div>
+      <div class="form-hint">Serwisant musi mieć konto w panelu technika. Po zaproszeniu zaakceptuje je w swoim panelu.</div>
+      <div id="inviteMsg" style="margin-top:8px"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-hdr" style="justify-content:space-between">
+        <span><i class="ti ti-clipboard-list"></i> Zlecenia</span>
+        <button class="btn btn-sm btn-primary" onclick="toggleNewZlecenie()"><i class="ti ti-${showNewZlecenie?'x':'plus'}"></i> ${showNewZlecenie?'Anuluj':'Nowe'}</button>
+      </div>
+      ${showNewZlecenie ? `<div style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--rs);padding:14px;margin-bottom:14px">
+        <div class="form-group" style="margin-bottom:10px"><label>Tytuł *</label><input type="text" id="nzTytul" placeholder="np. Przegląd kotła — ul. Lipowa 5"></div>
+        <div class="form-group" style="margin-bottom:10px"><label>Opis</label><textarea id="nzOpis" style="min-height:60px" placeholder="Szczegóły zlecenia…"></textarea></div>
+        <div class="form-group" style="margin-bottom:10px"><label>Przypisz serwisanta</label><select id="nzSerw"><option value="">— nieprzypisane —</option>${opts}</select></div>
+        <div class="form-group" style="margin-bottom:12px"><label>Priorytet</label><select id="nzPrio"><option value="normal">Zwykłe</option><option value="urgent">Pilne</option></select></div>
+        <button class="btn btn-primary btn-full" onclick="createZlecenie()"><i class="ti ti-check"></i> Utwórz zlecenie</button>
+      </div>` : ''}
+      ${zlecHtml}
+    </div>
+
+    <button class="btn btn-full" style="background:var(--red-light);color:var(--red);border:1px solid var(--red-border);margin-bottom:16px" onclick="openModal('logoutOv')"><i class="ti ti-logout"></i> Wyloguj się</button>
+    <div class="ver">${V} · portal.serwiscieplo.pl · panel firmowy</div>`;
+}
+
+function companyZlecenieCard(z, activeSerw) {
+  const stLabels = { new:'Nowe', assigned:'Przypisane', in_progress:'W trakcie', completed:'Wykonane', cancelled:'Anulowane' };
+  const stCls = { new:'tag-due', assigned:'tag-blue', in_progress:'tag-warn', completed:'tag-ok', cancelled:'tag-muted' };
+  const opts = `<option value="">— nieprzypisane —</option>` + activeSerw.map(s => `<option value="${s.serwisant_user_id}" ${z.serwisant_user_id === s.serwisant_user_id ? 'selected' : ''}>${esc(s.full_name || s.email)}</option>`).join('');
+  return `<div class="req-card${z.priorytet === 'urgent' ? ' urgent' : ''}" style="cursor:default">
+    <div class="req-top">
+      <div><div style="font-weight:700;font-size:14px">${esc(z.tytul)}${z.priorytet === 'urgent' ? ' <span class="tag tag-due" style="font-size:10px">🔴 Pilne</span>' : ''}</div>
+      <div class="req-date">${formatDate(z.created_at)}</div></div>
+      <span class="tag ${stCls[z.status]}">${stLabels[z.status]}</span>
+    </div>
+    ${z.opis ? `<div class="req-desc">${esc(z.opis)}</div>` : ''}
+    <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">
+      <select onchange="assignZlecenie('${z.id}',this.value)" style="flex:1;min-width:130px;padding:6px 8px;border:1px solid var(--border2);border-radius:var(--rs);font-size:12px;background:var(--surface);color:var(--text2);font-family:inherit;cursor:pointer">${opts}</select>
+      <select onchange="updateCompanyZlecenieStatus('${z.id}',this.value)" style="flex:1;min-width:110px;padding:6px 8px;border:1px solid var(--border2);border-radius:var(--rs);font-size:12px;background:var(--surface);color:var(--text2);font-family:inherit;cursor:pointer">
+        ${Object.keys(stLabels).map(s => `<option value="${s}" ${z.status === s ? 'selected' : ''}>${stLabels[s]}</option>`).join('')}
+      </select>
+    </div>
+  </div>`;
+}
+
+async function inviteSerwisant() {
+  const email = $('inviteEmail').value.trim();
+  const msg = $('inviteMsg');
+  if (!email) { msg.innerHTML = '<span style="color:var(--red);font-size:13px">Podaj e-mail serwisanta.</span>'; return; }
+  const { data, error } = await sb.rpc('invite_serwisant_to_firma', { p_email: email });
+  if (error || !data?.success) {
+    const map = { no_company:'Brak powiązanej firmy.', not_found:'Nie znaleziono serwisanta o tym e-mailu (musi mieć konto w panelu technika).' };
+    msg.innerHTML = `<span style="color:var(--red);font-size:13px">${esc(map[data?.error] || error?.message || 'Błąd zaproszenia.')}</span>`;
+    return;
+  }
+  showToast('Zaproszenie wysłane — serwisant zaakceptuje je w panelu.');
+  await loadCompanyData(); renderCompany();
+}
+
+function toggleNewZlecenie() { showNewZlecenie = !showNewZlecenie; renderCompany(); }
+
+async function createZlecenie() {
+  const tytul = $('nzTytul').value.trim();
+  if (!tytul) { showToast('Podaj tytuł zlecenia.'); return; }
+  const serw = $('nzSerw').value || null;
+  const { error } = await sb.from('zlecenia').insert({
+    firma_id: curFirma.id, tytul,
+    opis: $('nzOpis').value.trim() || null,
+    serwisant_user_id: serw,
+    status: serw ? 'assigned' : 'new',
+    priorytet: $('nzPrio').value,
+  });
+  if (error) { showToast('Błąd: ' + error.message); return; }
+  showNewZlecenie = false;
+  showToast('Zlecenie utworzone.');
+  await loadCompanyData(); renderCompany();
+}
+
+async function assignZlecenie(id, serwId) {
+  const { error } = await sb.from('zlecenia').update({ serwisant_user_id: serwId || null, status: serwId ? 'assigned' : 'new' }).eq('id', id);
+  if (error) { showToast('Błąd: ' + error.message); return; }
+  showToast('Zlecenie przypisane.');
+  await loadCompanyData(); renderCompany();
+}
+
+async function updateCompanyZlecenieStatus(id, status) {
+  const { error } = await sb.from('zlecenia').update({ status }).eq('id', id);
+  if (error) { showToast('Błąd: ' + error.message); return; }
+  showToast('Status zaktualizowany.');
+  await loadCompanyData(); renderCompany();
 }
 
 /* ── AUTH STATE — jedyne źródło prawdy o sesji ───────── */
