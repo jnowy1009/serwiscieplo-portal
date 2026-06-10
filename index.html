@@ -40,6 +40,23 @@
   --shadow:0 1px 3px rgba(0,0,0,.35);--shadow-md:0 4px 16px rgba(0,0,0,.45);
 }
 html,body{height:100%;font-family:-apple-system,'Segoe UI',Helvetica,sans-serif;background:var(--bg);color:var(--text);font-size:15px;transition:background .25s,color .25s}
+/* Markowe tło — subtelne poświaty (niebieski akcent + ciepły pomarańcz), przyklejone do ekranu */
+body{
+  background:
+    radial-gradient(820px 560px at 112% -8%, rgba(37,99,235,.14), transparent 60%),
+    radial-gradient(680px 520px at -14% 4%, rgba(249,115,22,.08), transparent 55%),
+    radial-gradient(760px 680px at 50% 118%, rgba(37,99,235,.10), transparent 62%),
+    var(--bg);
+  background-attachment:fixed;
+}
+[data-theme="dark"] body{
+  background:
+    radial-gradient(820px 560px at 112% -8%, rgba(59,130,246,.16), transparent 60%),
+    radial-gradient(680px 520px at -14% 4%, rgba(249,115,22,.07), transparent 55%),
+    radial-gradient(760px 680px at 50% 118%, rgba(37,99,235,.14), transparent 62%),
+    var(--bg);
+  background-attachment:fixed;
+}
 
 /* ── AUTH / ACTIVATE ──────────────────────────────────── */
 .auth-bg{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;background:radial-gradient(ellipse at 20% 50%,#1a0a00 0%,#0d0d0d 50%,#050510 100%);position:relative;overflow:hidden}
@@ -287,9 +304,10 @@ html,body{height:100%;font-family:-apple-system,'Segoe UI',Helvetica,sans-serif;
 .contact-val{font-size:14px;font-weight:600}
 
 /* EMPTY STATE */
-.empty{text-align:center;padding:36px 20px;color:var(--text3)}
-.empty i{font-size:46px;display:block;margin-bottom:12px;opacity:.5}
+.empty{text-align:center;padding:44px 20px;color:var(--text3)}
+.empty i{font-size:34px;display:inline-flex;align-items:center;justify-content:center;width:78px;height:78px;border-radius:50%;margin-bottom:14px;color:var(--accent);background:var(--accent-light);box-shadow:0 8px 24px -10px rgba(37,99,235,.4)}
 .empty p{font-size:14px;line-height:1.6}
+[data-theme="dark"] .empty i{background:rgba(59,130,246,.13);box-shadow:none}
 
 /* LOADER */
 .loader-wrap{display:flex;align-items:center;justify-content:center;min-height:180px}
@@ -334,6 +352,28 @@ html,body{height:100%;font-family:-apple-system,'Segoe UI',Helvetica,sans-serif;
 
 /* FOOTER VERSION */
 .ver{text-align:center;padding:16px 0;font-size:11px;color:var(--text3)}
+/* ── Stopka z dokumentami ── */
+.app-footer{margin-top:22px;padding:16px 0 8px;border-top:1px solid var(--border);text-align:center}
+.app-footer-links{display:flex;flex-wrap:wrap;gap:6px 14px;justify-content:center;margin-bottom:8px}
+.app-footer-links a{font-size:12px;color:var(--text2);cursor:pointer;text-decoration:none;transition:color .15s}
+.app-footer-links a:hover{color:var(--accent)}
+.app-footer-meta{font-size:11px;color:var(--text3);line-height:1.6}
+/* ── Pełnoekranowy dokument prawny ── */
+.legal-ov{display:none;position:fixed;inset:0;background:var(--bg);z-index:3000;flex-direction:column}
+.legal-ov.on{display:flex}
+.legal-bar{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 16px;border-bottom:1px solid var(--border);background:var(--surface)}
+.legal-bar .legal-title{font-weight:800;font-size:15px;color:var(--text);display:flex;align-items:center;gap:8px;min-width:0}
+.legal-close{flex:none;background:var(--surface2);border:1px solid var(--border2);width:34px;height:34px;border-radius:9px;color:var(--text2);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:18px}
+.legal-close:hover{color:var(--text)}
+.legal-content{flex:1;overflow-y:auto;padding:20px 18px 64px;max-width:760px;margin:0 auto;width:100%;line-height:1.65;font-size:14px;color:var(--text2);-webkit-overflow-scrolling:touch}
+.legal-content h2{font-size:16px;margin:22px 0 8px;color:var(--text);font-weight:800}
+.legal-content h2:first-child{margin-top:0}
+.legal-content h3{font-size:14px;margin:16px 0 6px;color:var(--text);font-weight:700}
+.legal-content p{margin:0 0 10px}
+.legal-content ul{margin:0 0 12px;padding-left:20px}
+.legal-content li{margin-bottom:5px}
+.legal-content strong{color:var(--text)}
+.legal-meta{font-size:12px;color:var(--text3);margin-bottom:18px;padding:10px 12px;background:var(--surface2);border-radius:10px}
 </style>
 </head>
 <body>
@@ -489,6 +529,15 @@ html,body{height:100%;font-family:-apple-system,'Segoe UI',Helvetica,sans-serif;
   </div>
 </div>
 
+<!-- DOKUMENT PRAWNY (regulamin / polityka prywatności) -->
+<div class="legal-ov" id="legalOv">
+  <div class="legal-bar">
+    <span class="legal-title" id="legalTitle"><i class="ti ti-file-text"></i> Regulamin</span>
+    <button class="legal-close" onclick="closeModal('legalOv')" aria-label="Zamknij"><i class="ti ti-x"></i></button>
+  </div>
+  <div class="legal-content" id="legalBody"></div>
+</div>
+
 <!-- PDF VIEWER (raport serwisowy) -->
 <div class="pdf-viewer-ov" id="pdfViewerOv">
   <div class="pdf-viewer-bar">
@@ -508,7 +557,7 @@ html,body{height:100%;font-family:-apple-system,'Segoe UI',Helvetica,sans-serif;
 const SB_URL = 'https://dzekzfxhqxiifuaesjum.supabase.co';
 const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR6ZWt6ZnhocXhpaWZ1YWVzanVtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg2MDY3ODEsImV4cCI6MjA5NDE4Mjc4MX0.SUFa62jSD0pThTtyN1n7eUKWRtPD42v4JP5vRNPf9fA';
 const sb = supabase.createClient(SB_URL, SB_KEY);
-const V = 'v2.3.0';
+const V = 'v2.4.0';
 
 /* Dane kontaktowe serwisanta — dostosuj do swoich */
 let SERWISANT_NAME  = 'SerwisCiepło';
@@ -820,7 +869,7 @@ function renderDashboard() {
     $('rv').innerHTML = `
       <div class="sec-hdr"><div><div class="sec-title">Moje obiekty</div><div class="sec-sub">Twoje przypisane kotłownie</div></div></div>
       <div class="empty"><i class="ti ti-building-community"></i><p>Brak przypisanych obiektów.<br>Skontaktuj się z serwisantem.</p></div>
-      <div class="ver">${V} · portal.serwiscieplo.pl</div>`;
+      ${footerHTML()}`;
     return;
   }
 
@@ -865,7 +914,7 @@ function renderDashboard() {
       <button class="btn btn-sm btn-outline" onclick="navigateTo('/raport')"><i class="ti ti-file-text"></i> Raport</button>
     </div>
     ${cardsHtml}
-    <div class="ver">${V} · portal.serwiscieplo.pl</div>`;
+    ${footerHTML()}`;
 }
 
 /* ── VIEW: KLIENT DETAIL ──────────────────────────────── */
@@ -949,7 +998,7 @@ async function renderKlientDetail(id) {
       </div>
     </div>`:''}
 
-    <div class="ver">${V} · portal.serwiscieplo.pl</div>`;
+    ${footerHTML()}`;
 }
 
 /* ── VIEW: ZGŁOSZENIA (wszystkie) ─────────────────────── */
@@ -971,7 +1020,7 @@ function renderRequests() {
     ${renderGroup(active,'Brak aktywnych zgłoszeń.')}
     ${archived.length?`<div class="card-hdr" style="margin:16px 0 10px"><i class="ti ti-check" style="font-size:14px"></i> Archiwum</div>`:''}
     ${archived.length?renderGroup(archived,''):''}
-    <div class="ver">${V} · portal.serwiscieplo.pl</div>`;
+    ${footerHTML()}`;
 }
 
 function reqCardHtml(r) {
@@ -1088,7 +1137,7 @@ function renderRequestDetail(id) {
       </button>
     </div>` : ''}
 
-    <div class="ver">${V} · portal.serwiscieplo.pl</div>`;
+    ${footerHTML()}`;
 }
 
 async function cancelRequest(reqId) {
@@ -1204,7 +1253,7 @@ function renderNewRequest() {
         <i class="ti ti-send"></i> Wyślij zgłoszenie
       </button>
     </div>
-    <div class="ver">${V} · portal.serwiscieplo.pl</div>`;
+    ${footerHTML()}`;
 }
 
 let _prio = 'normal';
@@ -1317,7 +1366,7 @@ function renderProfile() {
     <button class="btn btn-full" style="background:var(--red-light);color:var(--red);border:1px solid var(--red-border);margin-bottom:16px" onclick="openModal('logoutOv')">
       <i class="ti ti-logout"></i> Wyloguj się
     </button>
-    <div class="ver">${V} · portal.serwiscieplo.pl</div>`;
+    ${footerHTML()}`;
 }
 
 /* ── ZMIANA SERWISANTA ───────────────────────────────── */
@@ -1389,7 +1438,7 @@ async function renderReport() {
       <button class="btn btn-primary btn-full" onclick="openReportPdf()"><i class="ti ti-file-type-pdf"></i> Pobierz / drukuj PDF</button>
     </div>
     ${objectsHtml || '<div class="empty"><i class="ti ti-file-off"></i><p>Brak danych do raportu.</p></div>'}
-    <div class="ver">${V} · portal.serwiscieplo.pl</div>`;
+    ${footerHTML()}`;
 }
 
 function buildReportHTML() {
@@ -1471,6 +1520,135 @@ function closeReportPdf() {
 function openModal(id) { $(id).classList.add('on'); }
 function closeModal(id) { $(id).classList.remove('on'); }
 $('logoutOv').addEventListener('click', e=>{ if(e.target===e.currentTarget) closeModal('logoutOv'); });
+
+/* ── STOPKA + DOKUMENTY PRAWNE ───────────────────────── */
+function footerHTML(context) {
+  const kontakt = SERWISANT_PHONE ? `<a href="tel:${esc(SERWISANT_PHONE)}">Kontakt</a>` : '';
+  const tryb = context === 'firma' ? 'panel firmowy' : 'portal klienta';
+  return `<div class="app-footer">
+    <div class="app-footer-links">
+      <a onclick="openLegal('regulamin')">Regulamin</a>
+      <a onclick="openLegal('prywatnosc')">Polityka prywatności</a>
+      ${kontakt}
+    </div>
+    <div class="app-footer-meta">SerwisCiepło — ${tryb} · ${V}<br>© ${LEGAL_ROK} portal.serwiscieplo.pl</div>
+  </div>`;
+}
+
+const LEGAL_ROK = '2026';
+const LEGAL_DATA = 'czerwiec 2026 r.';
+
+function openLegal(key) {
+  const t = $('legalTitle');
+  const b = $('legalBody');
+  if (key === 'prywatnosc') {
+    t.innerHTML = '<i class="ti ti-shield-lock"></i> Polityka prywatności';
+    b.innerHTML = prywatnoscHTML();
+  } else {
+    t.innerHTML = '<i class="ti ti-file-text"></i> Regulamin';
+    b.innerHTML = regulaminHTML();
+  }
+  b.scrollTop = 0;
+  openModal('legalOv');
+}
+
+function regulaminHTML() {
+  return `
+    <div class="legal-meta">Regulamin korzystania z Portalu Klienta SerwisCiepło. Obowiązuje od: ${LEGAL_DATA}</div>
+    <h2>§1. Postanowienia ogólne</h2>
+    <p>1. Niniejszy Regulamin określa zasady korzystania z Portalu Klienta SerwisCiepło, dostępnego pod adresem portal.serwiscieplo.pl (dalej „Portal").</p>
+    <p>2. Portal jest narzędziem udostępnianym właścicielom i użytkownikom urządzeń grzewczych (dalej „Użytkownik") przez serwisanta lub firmę serwisową obsługującą dane urządzenie (dalej „Usługodawca").</p>
+    <p>3. Dane kontaktowe Usługodawcy obsługującego Twoje konto są widoczne w Portalu w sekcji kontaktu z serwisantem: <strong>${esc(SERWISANT_NAME)}</strong>${SERWISANT_PHONE ? `, tel. ${esc(SERWISANT_PHONE)}` : ''}.</p>
+    <p>4. Korzystanie z Portalu jest dobrowolne i nieodpłatne dla Użytkownika.</p>
+
+    <h2>§2. Definicje</h2>
+    <ul>
+      <li><strong>Portal</strong> — aplikacja internetowa (PWA) umożliwiająca podgląd informacji o urządzeniach grzewczych i historii serwisów oraz kontakt z serwisantem.</li>
+      <li><strong>Konto</strong> — indywidualny dostęp Użytkownika, aktywowany na podstawie zaproszenia od Usługodawcy.</li>
+      <li><strong>Zgłoszenie serwisowe</strong> — przesłana przez Użytkownika prośba o przegląd, naprawę lub interwencję serwisową.</li>
+    </ul>
+
+    <h2>§3. Zakres usług</h2>
+    <p>W ramach Portalu Użytkownik może w szczególności:</p>
+    <ul>
+      <li>przeglądać dane swoich urządzeń grzewczych oraz terminy przeglądów,</li>
+      <li>przeglądać historię wykonanych serwisów i uwagi technika,</li>
+      <li>składać zgłoszenia serwisowe oraz potwierdzać lub proponować zmianę terminu wizyty,</li>
+      <li>pobierać raport serwisowy oraz kontaktować się z serwisantem.</li>
+    </ul>
+
+    <h2>§4. Konto i warunki techniczne</h2>
+    <p>1. Dostęp do Portalu wymaga aktywowania Konta na podstawie zaproszenia (linku) otrzymanego od Usługodawcy oraz ustawienia hasła.</p>
+    <p>2. Do korzystania z Portalu niezbędne są: urządzenie z dostępem do internetu, aktualna przeglądarka oraz aktywny adres e-mail.</p>
+    <p>3. Użytkownik zobowiązany jest chronić dane logowania i nie udostępniać ich osobom trzecim.</p>
+
+    <h2>§5. Zgłoszenia i terminy wizyt</h2>
+    <p>1. Złożenie zgłoszenia serwisowego nie jest równoznaczne z zawarciem umowy ani z gwarancją realizacji w określonym czasie — stanowi prośbę o kontakt i ustalenie warunków.</p>
+    <p>2. Termin wizyty proponowany przez serwisanta wymaga potwierdzenia przez Użytkownika w Portalu. Użytkownik może zaproponować inny termin.</p>
+    <p>3. Zakres i koszt prac serwisowych ustalane są bezpośrednio pomiędzy Użytkownikiem a Usługodawcą i nie są przedmiotem niniejszego Regulaminu.</p>
+
+    <h2>§6. Obowiązki Użytkownika</h2>
+    <ul>
+      <li>podawanie prawdziwych danych oraz aktualizowanie ich w razie zmiany,</li>
+      <li>korzystanie z Portalu zgodnie z prawem i dobrymi obyczajami,</li>
+      <li>niepodejmowanie działań zakłócających działanie Portalu.</li>
+    </ul>
+
+    <h2>§7. Odpowiedzialność</h2>
+    <p>1. Usługodawca dokłada starań, aby Portal działał poprawnie, jednak nie ponosi odpowiedzialności za przerwy wynikające z przyczyn technicznych, działania siły wyższej lub po stronie dostawców usług.</p>
+    <p>2. Portal ma charakter informacyjny i pomocniczy; nie zastępuje czynności serwisowych ani dokumentacji urządzenia.</p>
+
+    <h2>§8. Reklamacje</h2>
+    <p>Reklamacje dotyczące działania Portalu można zgłaszać do Usługodawcy z wykorzystaniem danych kontaktowych wskazanych w §1 ust. 3. Reklamacja powinna zawierać opis problemu. Odpowiedź zostanie udzielona bez zbędnej zwłoki, nie później niż w terminie 14 dni.</p>
+
+    <h2>§9. Dane osobowe</h2>
+    <p>Zasady przetwarzania danych osobowych opisuje <a onclick="openLegal('prywatnosc')" style="color:var(--accent);cursor:pointer">Polityka prywatności</a>.</p>
+
+    <h2>§10. Postanowienia końcowe</h2>
+    <p>1. Usługodawca może zmienić Regulamin z ważnych przyczyn; o zmianach Użytkownik zostanie poinformowany w Portalu.</p>
+    <p>2. W sprawach nieuregulowanych stosuje się przepisy prawa polskiego.</p>
+  `;
+}
+
+function prywatnoscHTML() {
+  return `
+    <div class="legal-meta">Polityka prywatności Portalu Klienta SerwisCiepło. Aktualizacja: ${LEGAL_DATA}</div>
+    <h2>1. Administrator danych</h2>
+    <p>Administratorem danych osobowych przetwarzanych w związku z obsługą serwisową jest serwisant lub firma serwisowa obsługująca Twoje urządzenie. Dane kontaktowe Administratora są widoczne w Portalu: <strong>${esc(SERWISANT_NAME)}</strong>${SERWISANT_PHONE ? `, tel. ${esc(SERWISANT_PHONE)}` : ''}.</p>
+
+    <h2>2. Jakie dane przetwarzamy</h2>
+    <ul>
+      <li>dane identyfikacyjne i kontaktowe (imię i nazwisko, adres, telefon, e-mail),</li>
+      <li>dane dotyczące urządzeń grzewczych (model, numer seryjny, adres instalacji, terminy przeglądów),</li>
+      <li>historia serwisów i zgłoszeń oraz treści przekazane w Portalu,</li>
+      <li>dane techniczne niezbędne do działania aplikacji (np. identyfikator sesji).</li>
+    </ul>
+
+    <h2>3. Cele i podstawy prawne</h2>
+    <p>Dane przetwarzamy w celu:</p>
+    <ul>
+      <li>realizacji usług serwisowych i obsługi zgłoszeń — art. 6 ust. 1 lit. b RODO (umowa) oraz lit. f (prawnie uzasadniony interes),</li>
+      <li>kontaktu i ustalania terminów wizyt — art. 6 ust. 1 lit. b i f RODO,</li>
+      <li>prowadzenia historii serwisowej urządzeń — art. 6 ust. 1 lit. f RODO,</li>
+      <li>wypełnienia obowiązków prawnych (np. rozliczeniowych) — art. 6 ust. 1 lit. c RODO.</li>
+    </ul>
+
+    <h2>4. Odbiorcy danych</h2>
+    <p>Dane mogą być powierzane podmiotom wspierającym działanie Portalu (dostawca hostingu i bazy danych, usługi powiadomień e-mail) wyłącznie w zakresie niezbędnym do świadczenia usługi i na podstawie umów powierzenia. Dane nie są sprzedawane.</p>
+
+    <h2>5. Okres przechowywania</h2>
+    <p>Dane przechowujemy przez czas obsługi serwisowej oraz przez okres wynikający z przepisów prawa (m.in. podatkowych), a następnie je usuwamy lub anonimizujemy.</p>
+
+    <h2>6. Twoje prawa</h2>
+    <p>Masz prawo do: dostępu do danych, sprostowania, usunięcia, ograniczenia przetwarzania, przenoszenia danych, wniesienia sprzeciwu oraz wniesienia skargi do Prezesa Urzędu Ochrony Danych Osobowych. W celu realizacji praw skontaktuj się z Administratorem (dane w pkt 1).</p>
+
+    <h2>7. Pliki cookies i pamięć lokalna</h2>
+    <p>Portal korzysta z pamięci lokalnej przeglądarki oraz technologii niezbędnych do utrzymania sesji logowania i poprawnego działania aplikacji. Nie wykorzystujemy ich do śledzenia reklamowego.</p>
+
+    <h2>8. Kontakt</h2>
+    <p>W sprawach dotyczących danych osobowych skontaktuj się z Administratorem, korzystając z danych kontaktowych serwisanta widocznych w Portalu.</p>
+  `;
+}
 
 /* ── BOOTSTRAP APP ───────────────────────────────────── */
 // Flagi chronią przed równoległą/podwójną inicjalizacją (np. INITIAL_SESSION + TOKEN_REFRESHED).
@@ -1632,7 +1810,7 @@ function renderCompany() {
     </div>
 
     <button class="btn btn-full" style="background:var(--red-light);color:var(--red);border:1px solid var(--red-border);margin-bottom:16px" onclick="openModal('logoutOv')"><i class="ti ti-logout"></i> Wyloguj się</button>
-    <div class="ver">${V} · portal.serwiscieplo.pl · panel firmowy</div>`;
+    ${footerHTML('firma')}`;
 }
 
 function companyZlecenieCard(z, activeSerw) {
