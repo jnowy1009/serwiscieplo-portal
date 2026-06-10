@@ -925,6 +925,8 @@ async function renderKlientDetail(id) {
   if (!client) { $('rv').innerHTML='<div class="empty"><i class="ti ti-alert-circle"></i><p>Obiekt nie znaleziony.</p></div>'; return; }
 
   const {data:serwisy} = await sb.from('serwisy').select('*').eq('klient_id',id).order('data_serwisu',{ascending:false});
+  let instalacje = [];
+  try { ({data:instalacje} = await sb.from('instalacje').select('*').eq('klient_id',id).order('created_at')); instalacje = instalacje||[]; } catch(e) { instalacje = []; }
   const clientRequests = allRequests.filter(r=>r.klient_id===id && !['completed','cancelled'].includes(r.status));
   const st = svcStatus(serwisy||[]);
   const days = daysUntil(client.nastepny_przeglad);
@@ -952,6 +954,28 @@ async function renderKlientDetail(id) {
   const reqsHtml = clientRequests.length
     ? clientRequests.map(r=>reqCardHtml(r)).join('')
     : '<div style="font-size:13px;color:var(--text3);padding:8px 0">Brak aktywnych zgłoszeń.</div>';
+
+  const TYP_LBL = {staly:'Kocioł na paliwo stałe',gazowy:'Kocioł gazowy',olejowy:'Kocioł olejowy',pelet:'Kocioł na pelet',pompa_ciepla:'Pompa ciepła',elektryczny:'Kocioł elektryczny',inny:'Inny'};
+  const instalacjeHtml = instalacje.length ? `
+    <div class="card">
+      <div class="card-hdr"><i class="ti ti-stack-2"></i> Instalacje (${instalacje.length})</div>
+      ${instalacje.map((i,idx)=>{
+        const kociol=[i.producent,i.model].filter(Boolean).join(' ');
+        const p = i.typ_kotla==='gazowy' && i.dane && i.dane.przeglad_gazowy;
+        const gaz = p ? [p.cisnienie&&'ciśn. '+p.cisnienie, p.co&&'CO '+p.co+' ppm', p.co2&&'CO₂ '+p.co2+'%', p.temp_spalin&&'spaliny '+p.temp_spalin].filter(Boolean).join(' · ') : '';
+        return `<div style="padding:12px 0${idx<instalacje.length-1?';border-bottom:1px solid var(--border)':''}">
+          <div style="font-weight:700;font-size:14px">${esc(i.nazwa)}</div>
+          <div style="font-size:12px;color:var(--text3);margin-bottom:8px">${TYP_LBL[i.typ_kotla]||'Instalacja'}</div>
+          <div class="fields-grid">
+            ${kociol?`<div class="field"><label>Kocioł</label><span>${esc(kociol)}</span></div>`:''}
+            ${i.nr_seryjny?`<div class="field"><label>Nr seryjny</label><span>${esc(i.nr_seryjny)}</span></div>`:''}
+            ${i.moc?`<div class="field"><label>Moc</label><span>${esc(i.moc)}</span></div>`:''}
+            ${i.nastepny_przeglad?`<div class="field"><label>Następny przegląd</label><span>${formatDate(i.nastepny_przeglad)}</span></div>`:''}
+          </div>
+          ${p?`<div style="background:var(--surface2);border-radius:10px;padding:9px 11px;margin-top:8px;font-size:12px;color:var(--text2);line-height:1.5"><strong><i class="ti ti-test-pipe" style="color:var(--accent)"></i> Przegląd gazowy${p.data?` (${formatDate(p.data)})`:''}:</strong> ${esc(gaz)||'wykonany'}</div>`:''}
+        </div>`;
+      }).join('')}
+    </div>` : '';
 
   $('rv').innerHTML = `
     <div class="boiler-hero">
@@ -987,6 +1011,8 @@ async function renderKlientDetail(id) {
       <div class="card-hdr"><i class="ti ti-history"></i> Historia serwisów</div>
       ${svcsHtml}
     </div>
+
+    ${instalacjeHtml}
 
     ${(client.sw_wyswietlacz||client.sw_modul||client.notatki)?`
     <div class="card">
